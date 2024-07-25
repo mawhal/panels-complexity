@@ -1,0 +1,46 @@
+# Data dictionary for Panels Project
+
+## Table of Contents
+1. `metadata.xlsx` dictionary
+2. `pcover.csv` dictionary
+3. `data_community.xlsx` dictionary
+
+### 1. metadata.xlsx
+note that script `R/cover_data_metadata.R` changes aspects of the metadata table. See `change_log.txt`.
+##### columns
+- "Site Code" -- unique code for each site that is used throughout the dataset. This is used to join data tables. _Note that "Site Code" is changed to "site" for data analysis_
+- "Site" -- A more descriptive verion of the site code with place names written out. 
+- "Lat" - site latitude in decimal degrees
+- "Long" - site longitude in decimal degrees
+- "Date Range - 30 days" - month and day range for the sampling on day 30. All years are 2021
+- "Date Range - 60 days" - month and day range for the sampling on day 60. All years are 2021
+- "Date Range - 90 days" - month and day range for the sampling on day 90. All years are 2021
+- "Salinity - 30 days" - salinity sampled at day 30
+- "Salinity - 60 days" - salinity sampled at day 60
+- "Salinity - 90 days" - salinity sampled at day 90
+- "Temperature - 30 days" - temperature (Celsius) sampled at day 30
+- "Temperature - 60 days" - temperature (Celsius) sampled at day 60
+- "Temperature - 90 days" - temperature (Celsius) sampled at day 90
+
+
+### 2. `pcover.csv` dictionary
+pcover = percent cover as measured through 100 point counts on each plate
+##### columns
+- "Panel ID" - a combination of year, site code, sampling day, and panel number
+- "Site" - the site code used throughout the dataset
+- "Age" - sampling day
+- "Site_Age" - combination of "Site" and "Age"
+- "Algae_brown":"Forams" - taxonomic groups identified in point count surveys
+- "Open space" - a separate estimate open/bare/available space for settlement on panels
+- "Sediment" - an estimate of sediment cover on panels
+
+### 3. `data_community.xlsx` dictionary
+this table contains processed data from the study, inlcuding from point count data and a separate taxon/species list made at most sites
+##### columns
+- "ID" - unique plate ID, same as "Panel ID" in pcover data above
+- "site" - the site code used throughout the dataset
+- "temp" - tempreature in Celsius for each sampling day at each site
+- "rugosity" - a measure of topographic rugosity based on 3-dimensional models created for each panels from photos (structure from motion). This value ranges from 0 to 1, where 1 is a perfectly flat surface
+- "salinity" - salinity for each sampling day at each site
+- "richness" - an estimate of taxonomic/species richness based on point counts and a separate species list generated for each site based on visual inspection of photos by Dean Janiak
+- "s_diversity" - Shannon diversity measure for genus level identification

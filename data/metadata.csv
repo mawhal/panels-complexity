@@ -1,0 +1,20 @@
+site,site_name,Lat,Long,Date Range - 30 days,Date Range - 60 days,Date Range - 90 days,ocean
+CAN-BCQ,Canada - British Columbia,50.1031,-125.2113,6/29 - 7/30,7/30 - 8/31,8/31 - 9/28,Pacific
+PAN-BDT,Panama - Bocas del Toro,9.35105,-82.25716,6/18 - 7/18,7/18 - 8/18,8/18 - 9/18,Atlantic
+PAN-GOP,Panama - Gulf of Pacific,NA,NA,NA,NA,NA,NA
+POR-MAD,Portugal - Madeira,32.741289,-16.713203,6/30 - 8/3,8/3 - 9/1,9/1 - 10/1,Atlantic
+USA-ALD-PAP,USA - Alabama - Dauphin Island - Site 1,30.37736,-88.3112,7/7 - 8/6,8/6 - 9/9,9/9 - 10/7,Atlantic
+USA-ALD,USA - Alabama - Dauphin Island - Site 2 - Dock,30.25134,-88.07983,6/23 - 7/23,7/23 - 8/20,8/20 - 9/21,Atlantic
+USA-ALD-RI,USA - Alabama - Dauphin Island - Site 3,30.30141,-87.45925,7/1 - 7/30,7/30 - 9/1,9/1 - 9/28,Atlantic
+USA-CBB,USA - California - Bodega Bay,38.32864,-123.05654,7/2 - 8/2,8/2 - 8/31,8/31 - 10/2,Pacific
+USA-HIK,USA - Hawaii - Kaneohe Bay,21.4328,-157.7903,6/29 - 7/28,7/28 - 8/27,8/27 - 9/24,Pacific
+USA-IRL,USA - Florida - Indian River Lagoon,27.457406,-80.311746,6/17 - 7/19,7/19 - 8/17,8/17 - 9/16,Atlantic
+USA-LIS,USA - New York - Long Island Sound,40.884683,-72.441368,7/1 - 8/1,8/1 - 9/1,9/1 - 10/1,Atlantic
+USA-MDA,USA - Maryland - Chesapeake Bay,38.885641,-76.54149,6/21 - 7/21,7/21 - 8/18,8/18 - 9/20,Atlantic
+USA-MWH,USA - Mass - Woods Hole,41.52472222,-70.66944444,6/30 - 7/31,7/31 - 9/2,9/2 - 9/30,Atlantic
+USA-SBH,USA - California - Santa Barbara,34.40533,-119.689867,7/14 - 8/13,8/13 - 9/13,9/13 - 10/13,Pacific
+USA-SDB,USA - California - San Diego,32.724582,-117.174834,7/1 - 7/30,7/30 - 8/31,8/31 - 9/30,Pacific
+USA-SFB,USA - California - San Francisco,37.80642,-122.44339,6/18 -7/19,7/19 - 8/17,8/17 - 9/20,Pacific
+USA-TMA,USA - Texas - Corpus Christi,27.837683,-97.053117,6/22 - 7/21,7/21 - 8/18,8/18 - 9/16,Atlantic
+USA-VAS,USA - Virginia - Wachapreague,37.287513,-75.925247,7/16 - 8/16,8/16 - 9/14,9/14 - 10/13,Atlantic
+USA-WAS,USA - Washington - Friday Harbor,48.5453,-123.0121,7/2 - 8/1,8/1 - 8/31,8/31 - 9/30,Pacific

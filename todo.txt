@@ -1,0 +1,65 @@
+Latitudinal gradients
+
+- for richness, diversity, redundancy, rugosity
+- against temperature
+- by date likely most relevant
+
+
+ordinations -  back-burner for now - discuss how we want to do this.
+- 
+
+models with new richness and diversity data
+
+
+Need to update the data dictionary based on new data. 
+
+
+## Remove low salinity sites?
+- remove for trends
+
+
+# Title:
+
+- topic - biogeogrpahy of diversity-complexity relationship
+- title - There is or is not one (we think there is a relationship)
+- depends on speed of communities
+- a diversity-complexity relationship emerges at the biogeographic scale in marine fouling communities
+- 
+
+
+### Questions for Dean
+- check Sh_diversity measures that are zero when richness > 1 (is open space counted as a species? Let's fix this 
+- this must be because additional species were counted after point counts 
+- send over raw metadata file again?
+- which site is USA-ALD? There are three listed in the metadata
+
+
+# Temperature and Latitude
+- not enough sites
+- open ocean vs estuarine vs protected likely more important, but not enough samples of these different sites
+- colder sites - include this in a model?
+- linear relationships with latitude and temperature
+
+
+# within vs across site relationships - 
+- does the question change based on the scale - diversity and complexity
+
+# decoupling of diversity-complexity relationship with competition
+- how to think about age and competition
+- cover as a covariate - or open space might make more sense - check biogeography patterns
+- cover of arborescent bryozoans as a covariate as well.
+- saturation happens -> decoupling
+
+## structure of paper
+- biogeographic gradient in diversity (richness + shannon)
+- faceted graph with rugosity and richness and shannon
+- within sites graph (rugosity ~ shannon faceted)
+
+# models to present
+- separate models for richness and diversity
+
+Discussion points
+- high recrutiment or growth - saturate space and compeition can take over
+- certain species that can overgrow others, some will be high complexity, other low complexity
+- 
+
