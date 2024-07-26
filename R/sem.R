@@ -107,9 +107,9 @@ basisSet(sem1)
 dSep(sem1)
 
 sem2 <- psem(
-  lm( estimate ~ temp_mean + sal_mean + logrug_30, data = dpick),
+  lm( estimate ~ temp_mean + sal_mean , data = dpick),
   lm( richness_90 ~ temp_mean + sal_mean + estimate + logrug_30, data = dpick),
-  lm( logrug_30 ~ temp_mean, data = dpick)
+  lm( logrug_30 ~  estimate, data = dpick)
   )
 summary(sem2)
 basisSet(sem2)

@@ -115,4 +115,7 @@ ggplot(dsite90, aes(x = estimate, y = logrug)) +
   geom_point()
 ggplot(dsite90, aes(x = temp, y = estimate)) +
   geom_smooth() +
-  geom_point() 
+  geom_point() +
+  ylab("Community growth rate\n(% cover per day)") +
+  xlab(expression(paste("Temperature ", degree, "C")))
+ggsave("figs/growth_temperature.svg", width = 3, height = 3)
