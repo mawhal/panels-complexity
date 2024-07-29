@@ -46,8 +46,8 @@ comm <- comm[-missing,]
 
 # capscale/dbrda
 comm_meta$temperature <- comm_meta$temp
-ord1 <- capscale( comm ~ rugosity + temperature + salinity, comm_meta, dist = "bray")
-ord2 <- capscale( comm ~ rugosity, comm_meta, dist = "bray")
+ord1 <- dbrda( comm ~ rugosity + temperature + salinity, comm_meta, dist = "bray")
+ord2 <- dbrda( comm ~ rugosity, comm_meta, dist = "bray")
 ord <- ord1
 plot(ord)
 anova(ord)
@@ -55,7 +55,9 @@ summary(ord)
 taxa <- scores(ord, display = 'species')
 envfit(ord, env = comm_meta[,c("rugosity")] )
 scores2 <- as.data.frame(taxa[   order( taxa[,1], taxa[,2] ), ])
-scores2 <- scores2 %>% mutate(taxon = rownames(scores2))  %>% arrange(-CAP1)
+scores2 <- scores2 %>% mutate(taxon = rownames(scores2))  %>% arrange(CAP2)
+summary(scores2$CAP2)
+quantile( scores2$CAP2, 0.15 )
 # 
 
 # nicer plot
@@ -68,7 +70,6 @@ nax <- 1:2
 scaling = 0
 sitescore <- scores(ord,choices = nax, scaling = scaling)$sites
 taxascore <- scores(ord,choices = nax, scaling = scaling)$species
-
 
 
 
@@ -92,6 +93,10 @@ cummr2 <- R2
 for(i in 2:length(eigenvals(ord))){
   cummr2[i] <- cummr2[i]+cummr2[i-1]  
 }
+RsquareAdj(ord)$adj.r.squared
+RsquareAdj(ord)$r.squared
+
+anova(ord, by = "terms")
 
 # join with meta data
 sr <- data.frame( comm_meta, sitescore )
@@ -101,8 +106,8 @@ library(grid)
 library(ggrepel)
 
 vec.sp <- envfit(ord, perm = 1000, env = comm_meta[,c("temperature","salinity","rugosity")] )
-vec.sp.df<-as.data.frame(vec.sp$vectors$arrows*sqrt(vec.sp$vectors$r))
-vec.sp.df$species<-rownames(vec.sp.df)
+vec.sp.df <- as.data.frame(vec.sp$vectors$arrows * sqrt(vec.sp$vectors$r))
+vec.sp.df$species <- rownames(vec.sp.df)
 
 # filter data for the big three taxa
 taxhi <- as.data.frame(taxascore) %>% filter(rownames(taxascore) %in% c("ar_bryo","col_asc","en_bryo") )
@@ -116,5 +121,5 @@ ggplot( data=sr, aes(x = CAP1,y = CAP2) ) +
   geom_text_repel(data = taxhi, aes(x = CAP1, y = CAP2, label = taxnames), col = "darkorange") +
   theme_test() +
   coord_fixed()
-ggsave("figs/capscale.svg", width = 5, height = 3)  
+# ggsave("figs/capscale.svg", width = 5, height = 3)  
 
