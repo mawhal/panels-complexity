@@ -84,11 +84,12 @@ ggplot( d, aes( x = age, y = richness, col = site )) +
 # pivot the data wider to separate times
 # site-level averages
 dsite <- d %>% 
-  select( site, age, lat, richness, shannon, rug2, temp, salinity, total_cover ) %>% 
+  select( site, age, lat, richness, shannon, rug2, temp, salinity, total_cover, ar_bryo ) %>% 
   group_by(site, age, lat ) %>% 
   summarise( temp = mean(temp, na.rm = T ), salinity = mean(salinity, na.rm = T), 
              richness = mean(richness, na.rm=T ), shannon = mean(shannon, na.rm=T), 
-             rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover) ) %>% 
+             rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover),
+             ar_bryo = mean(ar_bryo, na.rm = T)) %>% 
   mutate( logrug = log( rug2 ) )
 
 # get average temps and keep the rest
@@ -100,8 +101,8 @@ dsite <- left_join( dsite, dsitemean )
   
           
 dwide <-  dsite %>%  
-  select( site, age, temp_mean, sal_mean, richness, logrug, total_cover) %>% 
-  pivot_wider( names_from = age, values_from = c(richness, logrug, total_cover))
+  select( site, age, temp_mean, sal_mean, richness, logrug, total_cover, ar_bryo) %>% 
+  pivot_wider( names_from = age, values_from = c(richness, logrug, total_cover, ar_bryo))
 
 # write to disk for other analyses
 write_csv( dwide, "data/data_wide.csv" )
