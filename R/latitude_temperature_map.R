@@ -81,22 +81,21 @@ ggplot( data = dsite, aes(x = lat, y = richness )) +
   facet_wrap( ~age ) +
   geom_smooth( aes(group = 1), method = "lm", se = T) +
   geom_point()
-summary(lm(richness~lat*age, data = dsite))
+
+# define average temperature and salinity for each site
+d <- d %>% group_by( site) %>% 
+  mutate( sal_mean = mean(salinity), temp_mean = mean(temp) )
 
 dmax <- d %>% 
-  group_by( site, lat, salinity, total_richness ) %>% 
+  group_by( site, lat, temp_mean, sal_mean, total_richness ) %>% 
   summarize( richness = max(richness) )
-dsite90 <- dsite %>% filter(age == 90)
-summary(lm(richness~lat, data = dsite90))
-summary(lm(richness~lat, data = dmax))
-summary(lm(total_richness~lat, data = dmax))
 
 ggplot( data = dmax, aes(x = lat, y = richness )) +
   geom_smooth( aes(group = 1), method = "lm", se = T) +
   geom_point() +
   geom_text_repel( aes(label = site) ) +
   theme_classic()
-ggplot( data = dmax, aes( x = lat, y = total_richness, col = salinity )) +
+ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   geom_smooth( aes(group = 1), method = "lm", se = F, lwd = 0.75, col = "black") +
   geom_point( size = 3) +
   # geom_text_repel( aes(label = site), col = "slateblue" ) +
@@ -106,51 +105,71 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = salinity )) +
 ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 
 
-# Temperature
-ggplot( data = d, aes(x = temp, y = richness )) +
-  facet_wrap( ~age ) +
-  geom_point() + geom_smooth( aes(group = 1), method = "lm", se = T)
-ggplot( data = d, aes(x = temp, y = shannon )) +
-  facet_wrap( ~age ) +
-  geom_point() + geom_smooth( aes(group = 1), method = "lm", se = T)
-# temperature and salinity
-ggplot( data = dsite, aes(x = temp, y = salinity, size = richness )) +
-  facet_wrap( ~age ) + geom_point()
-ggplot( data = dsite, aes(x = lat, y = salinity, size = richness )) +
-  facet_wrap( ~age ) + geom_point()
+ggplot( data = dmax, aes(x = lat, y = temp_mean)) +
+  geom_point()
 
-# 
-# 
-# # make data longer form so richness and Shannon diversity can be plotted together
-# dlong <- dsite %>% pivot_longer( richness:shannon)
-# 
-# ggplot( data = dlong, aes(x = lat, y = value, col = salinity )) +
-#   # facet_grid( name~age, scales = "free_y" ) +
-#   facet_wrap( ~name, scales = "free_y" ) +
-#   geom_smooth( aes(group = 1), method = "lm", se = F, col = "black", fill = "grey", lwd = 0.8) +
-#   geom_point( ) + 
-#   xlab( expression(paste("Latitude (",degree,"C)"))) + ylab("Value") +
-#   theme_bw()
-# # ggsave("figs/diversity_latitude.svg", width = 4.5, height = 3)
-# ggsave("figs/diversity_latitude.svg", width = 4.5, height = 2)
-# 
-# 
-# # models
+
+# ranges
+range(dmax$total_richness)
+range(dsite$richness)
+
+
+# models
 # dsite$age <- as.numeric(gsub("([0-9]+).*$", "\\1", dsite$age))
-# m1 <- lm( richness ~ lat+age, dsite)
-# m1.1 <- lm( richness ~ lat+age+salinity, dsite)
-# m2 <- lm( shannon ~ lat+age, dsite)
-# m2.1 <- lm( shannon ~ lat+age+salinity, dsite)
-# 
-# summary(m1.1)
-# summary(m2.1)
-# 
-# mtable123 <- mtable('Richness' = m1.1,
-#                     'Shannon' = m2.1,
-#                     summary.stats = c('R-squared','F','N'))
-# mtable123
-# 
-# 
+m1 <- lm( richness ~ lat+temp+salinity+age, dsite)
+summary(m1)
+# remove temperature
+m1a <- lm( richness ~ lat+salinity+factor(age), dsite)
+summary(m1a)
+# remove latitude
+m1b <- lm( richness ~ temp+salinity+factor(age), dsite)
+summary(m1b)
+anova(m1,m1a,m1b)
+
+
+newdat = expand.grid( lat = seq(min(dsite$lat),max(dsite$lat), by = 3), 
+                      salinity = mean(dsite$salinity),
+                      age = factor(c(30,60,90)) )
+newdat$richness = predict(m1a, newdata = newdat )
+ggplot( data = dsite, aes( x = lat, y = richness, col = salinity )) +
+  facet_wrap(~ age) +
+  # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
+  geom_path( data = newdat, lwd = 0.75, col = "black") +
+  geom_point( size = 3) +
+  ylab("Total species richness") + xlab("Latitude") +
+  scale_color_viridis() +
+  theme_bw() 
+ggsave("figs/richness_latitude_age.svg", width = 6, height = 2)
+
+newdat = expand.grid( temp = seq(min(dsite$temp),max(dsite$temp), by = 3), 
+                      salinity = mean(dsite$salinity),
+                      age = factor(c(30,60,90)) )
+newdat$richness = predict(m1b, newdata = newdat )
+ggplot( data = dsite, aes( x = temp, y = richness, col = salinity )) +
+  facet_wrap(~ age) +
+  # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
+  geom_path( data = newdat, lwd = 0.75, col = "black") +
+  geom_point( size = 3) +
+  ylab("Total species richness") + xlab("Temperature (C)") +
+  scale_color_viridis() +
+  theme_bw() 
+ggsave("figs/richness_temperature_age.svg", width = 6, height = 2)
+
+
+
+
+# total richness
+m2 <- lm( total_richness ~ lat+temp_mean+sal_mean, dmax)
+summary(m2)
+# remove temperature
+m2a <- lm( total_richness ~ lat+sal_mean, dmax)
+summary(m2)
+# remove latitude
+m2b <- lm( total_richness ~ temp_mean+sal_mean, dmax)
+summary(m2b)
+
+
+
 # 
 # ggplot( data = dlong, aes(x = temp, y = value, col = salinity )) +
 #   # facet_grid( name~age, scales = "free_y" ) +
