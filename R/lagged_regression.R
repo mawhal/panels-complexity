@@ -71,7 +71,7 @@ d <- left_join( d, select(dsite, site, age, richness_mean = richness))
 
 
 
-# realtionships to invesitgate
+# relationships to investigate
 # rugosity early -> diversity later - this might be better to look at with species associated with primary substrate
 # diversity early - > rugosity later
 # local diversity was fairly steady, seemed to saturate early with respect to primary settlers

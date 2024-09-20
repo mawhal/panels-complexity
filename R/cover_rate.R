@@ -92,30 +92,99 @@ slopes <- regressions %>%
   filter(term == "age") %>% 
   select( site, estimate )
 
+# repeat, omitting day 90 data to get an initial growth rate
+dzeros90 <- dzeros %>% filter( age < 90 )
+regressions2 <- dzeros90 %>%
+  nest(data = -site) %>%
+  mutate(
+    fit = map(data, ~ lm(total_cover ~ age + 0, data = .x)),
+    tidied = map(fit, tidy),
+    glanced = map(fit, glance),
+    augmented = map(fit, augment)
+  )
+
+slopes2 <- regressions2 %>%
+  unnest(tidied) %>% 
+  filter(term == "age") %>% 
+  select( site, estimate )
+
+# repeat, omitting days 60 and 90 data to get an initial growth rate
+dzeros30 <- dzeros %>% filter( age < 60 )
+regressions3 <- dzeros30 %>%
+  nest(data = -site) %>%
+  mutate(
+    fit = map(data, ~ lm(total_cover ~ age + 0, data = .x)),
+    tidied = map(fit, tidy),
+    glanced = map(fit, glance),
+    augmented = map(fit, augment)
+  )
+
+slopes3 <- regressions3 %>%
+  unnest(tidied) %>% 
+  filter(term == "age") %>% 
+  select( site, estimate )
+
+# use quasibinomial models
+dzeros$cover_prop <- dzeros$total_cover/100
+dzeros90$cover_prop <- dzeros90$total_cover/100
+glms <- dzeros %>%
+  nest(data = -site) %>%
+  mutate(
+    fit = map(data, ~ glm(cover_prop ~ age, family = quasibinomial(), data = .x)),
+    tidied = map(fit, tidy),
+    glanced = map(fit, glance),
+    augmented = map(fit, augment)
+  )
+
+slopes_glm <- glms %>%
+  unnest(tidied) %>% 
+  filter(term == "age") %>% 
+  select( site, estimate )
+# hist((slopes_glm$estimate))
+
+
+# merge the two slope estimates
+slopes$method <- "lm_all"; slopes2$method <- "lm_middle"; slopes3$method = "lm_initial"; slopes_glm$method <- "glm" 
+slopes <- bind_rows(slopes,slopes2,slopes3,slopes_glm)
+slopes <- slopes %>% pivot_wider( names_from = method, values_from = estimate )
+plot(lm_all ~ lm_initial, data = slopes); abline(a = 0, b = 1)
+plot(glm ~ lm_initial, data = slopes); abline(a = 0, b = 1)
+
+# write to disk
 write_csv(slopes,"data/cover_rate_slopes.csv")
+# psych::pairs.panels(slopes[-1], breaks = 10)
 
 dzeros <- left_join(dzeros, slopes)
-dzeros$site_order <- factor(dzeros$site, levels = slopes$site[rev(order(slopes$estimate))])
 
 
-ggplot( dzeros, aes( x = age, y = total_cover )) + 
+ggplot( dzeros, aes( x = age, y = cover_prop )) + 
   facet_wrap( ~ site_order) +
-  geom_smooth( aes(group = site), method = "lm", formula = y ~ x + 0, se = F, col = 'darkgrey', lwd = 0.75) + 
+  # geom_smooth( data = dzeros, aes(group = site), method = "lm", formula = y ~ x + 0, se = F, col = 'darkgrey', lwd = 0.75) +
+  # geom_smooth( data = dzeros, aes(group = site),
+  #              se = F, col = 'darkgrey', lwd = 0.75) +
+  geom_smooth( data = dzeros, aes(group = site), method = "glm", formula = y ~ x,
+               method.args = list(family = quasibinomial(link = 'logit')),
+               se = F, col = 'darkgrey', lwd = 0.75) +
+  geom_smooth( data = dzeros %>% filter(age != 90), aes(group = site), method = "lm", formula = y ~ x + 0,
+               method.args = list(family = quasibinomial(link = 'logit')),
+               se = F, col = 'darkgrey', lwd = 0.75) +
   geom_point(alpha = 1, size = 2, pch = 21) + 
   scale_fill_viridis(option = "D", direction = 1, name = "log(rugosity)") +
   scale_x_continuous(name = "Panel age (days)", breaks = c(0,30,60,90), limits = c(0,95)) +
-  scale_y_continuous(name = "Total % cover", breaks = c(0,50,100), limits = c(-5,105)) +
+  scale_y_continuous(name = "Total prop. cover", breaks = c(0,.50,1), limits = c(-0.05,1.05)) +
   theme_classic() 
 
 
 # compare to other data
 dsite90 <- dsite %>% filter( age == 90 )
 dsite90 <- left_join( dsite90, slopes )
-ggplot(dsite90, aes(x = estimate, y = logrug)) +
+ggplot(dsite90, aes(x = glm, y = logrug, col = salinity)) +
+  geom_smooth( method = 'lm', se = F, col = "black", lty = 2 ) +
+  geom_smooth( data = dsite90 %>% filter(salinity>20), method = 'lm' ) +
   geom_point()
-ggplot(dsite90, aes(x = temp, y = estimate)) +
-  geom_smooth() +
-  geom_point() +
+ggplot(dsite90, aes(x = temp, y = lm_initial, col = salinity )) +
+  geom_smooth( method = "lm") +
+  geom_point(  ) +
   ylab("Community growth rate\n(% cover per day)") +
   xlab(expression(paste("Temperature ", degree, "C")))
 ggsave("figs/growth_temperature.svg", width = 3, height = 3)
