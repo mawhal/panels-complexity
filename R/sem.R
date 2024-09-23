@@ -35,6 +35,17 @@ write_csv(dpick, "data/data_sem.csv")
 # load merged data
 d <- read_csv("data/data_sem.csv")
 
+# species list
+tlist <- read_csv("data/taxon_list.csv")
+totalrich <- tlist %>% 
+  group_by( site ) %>% 
+  summarize( total_richness = length(unique(taxon)) )
+totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
+
+d <- left_join(d, totalrich)
+
+
+
 ### Structural Equation Modeling
 ## compare two models, each with the same number of degrees of freedom, but different directionality
 # focal variables are endogenous
@@ -74,6 +85,26 @@ summary(fit1, fit.measures = T, standardized = T, rsquare = T)
 
 
 ##### include arborescent bryozoans
+sem2a <- '
+  # regressions
+  lm_middle ~ temp_mean
+  richness_30 ~ temp_mean + sal_mean
+  logrug_90 ~ lm_middle + richness_30 + log_ar_bryo_90
+  log_ar_bryo_90 ~   temp_mean  + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  richness_30 ~~ richness_30
+  logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
+  # covariances of residuals
+'
+fit2a <- lavaan(sem2a, data = d)
+summary(fit2a, fit.measures = T, standardized = T, rsquare = T)
 sem2 <- '
   # regressions
   lm_middle ~ temp_mean
@@ -92,21 +123,42 @@ sem2 <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit2 <- lavaan(sem2, data = d)
-summary(fit2, fit.measures = T, standardized = T, rsquare = T)
-# tidySEM::graph_sem(fit2)
+fit2a <- lavaan(sem2a, data = d)
+summary(fit2a, fit.measures = T, standardized = T, rsquare = T)
+anova(fit2, fit2a)
+
+sem3 <- '
+  # regressions
+  lm_middle ~ temp_mean
+  total_richness ~ temp_mean + sal_mean
+  logrug_90 ~ lm_middle + total_richness + log_ar_bryo_90
+  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  total_richness ~~ total_richness
+  logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
+  # covariances of residuals
+'
+fit3 <- lavaan(sem3, data = d)
+summary(fit3, fit.measures = T, standardized = T, rsquare = T)
 
 
 #
 # model comparison
-anova(fit1,fit2)
-nonnest2::vuongtest( fit1, fit2, nested = FALSE )
+anova(fit2,fit2)
+nonnest2::vuongtest( fit2, fit3, nested = FALSE )
 #
 
 
 # pairwise
 ggplot( d, aes(x = temp_mean, y = glm) ) + geom_point()
-ggplot( d, aes(x = temp_mean, y = lm_middle) ) + geom_point()
+ggplot( d, aes(x = temp_mean, y = lm_middle) ) + geom_smooth() + geom_point()
 ggplot( d, aes(x = temp_mean, y = lm_initial) ) + geom_point()
 ggplot( d, aes(x = temp_mean, y = lm_all) ) + geom_point()
 
@@ -147,11 +199,11 @@ dSep(psem1)
 
 # SEM2 - complexity influences diversity
 psem2 <- psem(
-  lm( estimate ~ temp_mean + sal_mean , data = d),
-  lm( richness_90 ~ temp_mean + sal_mean + estimate + logrug_30, data = d),
-  lm( logrug_30 ~  estimate + ar_bryo_30, data = d),
-  lm( ar_bryo_30 ~  temp_mean + sal_mean, data = d)
-  )
+  lm( lm_middle ~ temp_mean, data = d),
+  lm( total_richness ~ temp_mean + sal_mean, data = d),
+  lm( logrug_90 ~ lm_middle + total_richness + log_ar_bryo_90, data = d),
+  lm( log_ar_bryo_90 ~  temp_mean + lm_middle + sal_mean, data = d)
+)
 summary(psem2)
 basisSet(psem2)
 dSep(psem2)

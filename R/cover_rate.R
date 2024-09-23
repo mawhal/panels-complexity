@@ -157,23 +157,23 @@ write_csv(slopes,"data/cover_rate_slopes.csv")
 dzeros <- left_join(dzeros, slopes)
 
 
-ggplot( dzeros, aes( x = age, y = cover_prop )) + 
+ggplot( dzeros, aes( x = age, y = total_cover )) + 
   facet_wrap( ~ site_order) +
   # geom_smooth( data = dzeros, aes(group = site), method = "lm", formula = y ~ x + 0, se = F, col = 'darkgrey', lwd = 0.75) +
   # geom_smooth( data = dzeros, aes(group = site),
   #              se = F, col = 'darkgrey', lwd = 0.75) +
-  geom_smooth( data = dzeros, aes(group = site), method = "glm", formula = y ~ x,
-               method.args = list(family = quasibinomial(link = 'logit')),
-               se = F, col = 'darkgrey', lwd = 0.75) +
+  # geom_smooth( data = dzeros, aes(group = site), method = "glm", formula = y ~ x,
+  #              method.args = list(family = quasibinomial(link = 'logit')),
+  #              se = F, col = 'darkgrey', lwd = 0.75) +
   geom_smooth( data = dzeros %>% filter(age != 90), aes(group = site), method = "lm", formula = y ~ x + 0,
                method.args = list(family = quasibinomial(link = 'logit')),
                se = F, col = 'darkgrey', lwd = 0.75) +
   geom_point(alpha = 1, size = 2, pch = 21) + 
   scale_fill_viridis(option = "D", direction = 1, name = "log(rugosity)") +
   scale_x_continuous(name = "Panel age (days)", breaks = c(0,30,60,90), limits = c(0,95)) +
-  scale_y_continuous(name = "Total prop. cover", breaks = c(0,.50,1), limits = c(-0.05,1.05)) +
-  theme_classic() 
-
+  scale_y_continuous(name = "Percent cover", breaks = c(0,25,50,75,100), limits = c(-5,105)) +
+  theme_bw() 
+ggsave("figs/cover_rate.svg", height = 4, width = 4)
 
 # compare to other data
 dsite90 <- dsite %>% filter( age == 90 )
