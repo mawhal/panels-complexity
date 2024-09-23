@@ -136,7 +136,7 @@ ggplot( data = dsite, aes( x = lat, y = richness, col = salinity )) +
   # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
   geom_path( data = newdat, lwd = 0.75, col = "black") +
   geom_point( size = 3) +
-  ylab("Total species richness") + xlab("Latitude") +
+  ylab("Mean species richness") + xlab("Latitude") +
   scale_color_viridis() +
   theme_bw() 
 ggsave("figs/richness_latitude_age.svg", width = 6, height = 2)
@@ -150,7 +150,7 @@ ggplot( data = dsite, aes( x = temp, y = richness, col = salinity )) +
   # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
   geom_path( data = newdat, lwd = 0.75, col = "black") +
   geom_point( size = 3) +
-  ylab("Total species richness") + xlab("Temperature (C)") +
+  ylab("Mean species richness") + xlab("Water temperature (C)") +
   scale_color_viridis() +
   theme_bw() 
 ggsave("figs/richness_temperature_age.svg", width = 6, height = 2)
