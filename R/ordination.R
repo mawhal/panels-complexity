@@ -46,24 +46,24 @@ comm <- comm[-missing,]
 
 # capscale/dbrda
 comm_meta$temperature <- comm_meta$temp
-ord1 <- dbrda( comm ~ rugosity + temperature + salinity, comm_meta, dist = "bray")
-ord2 <- dbrda( comm ~ rugosity, comm_meta, dist = "bray")
+ord1 <- capscale( comm ~ rugosity + temperature + salinity, comm_meta, dist = "bray")
+ord2 <- capscale( comm ~ rugosity, comm_meta, dist = "bray")
 ord <- ord1
 plot(ord)
 anova(ord)
-summary(ord)
+# summary(ord)
 taxa <- scores(ord, display = 'species')
 envfit(ord, env = comm_meta[,c("rugosity")] )
 scores2 <- as.data.frame(taxa[   order( taxa[,1], taxa[,2] ), ])
 scores2 <- scores2 %>% mutate(taxon = rownames(scores2))  %>% arrange(CAP2)
 summary(scores2$CAP2)
 quantile( scores2$CAP2, 0.15 )
-# 
+
 
 # nicer plot
 
 ## get species vectors (can be thought of correlations with CAP axes?)
-ord.v <- data.frame( family=row.names(ord$CCA$v), ord$CCA$v ) %>% arrange(CAP1)
+ord.v <- data.frame( family=row.names(ord$CCA$v), ord$CCA$v ) %>% arrange(CAP2)
 
 # extract axes
 nax <- 1:2
