@@ -9,6 +9,9 @@
 
 # packages
 library(tidyverse)
+# models
+library(lmerTest)
+library(bbmle)
 # colors
 library(viridis)
 # tables
@@ -68,19 +71,9 @@ dsite <- d %>%
 
 # bivariate relationships
 # entire dataset - all sampling dates combined
-d_pairs <- dsite %>% ungroup() %>% dplyr::select(lat, temp, salinity, richness, total_richness)
+d_pairs <- dsite %>% ungroup() %>% dplyr::select(lat, temp, salinity, total_richness, richness)
 psych::pairs.panels(d_pairs)
 
-
-# Latitude
-ggplot( data = d, aes(x = lat, y = richness, col = salinity )) +
-  facet_wrap( ~age ) +
-  geom_point() + geom_smooth( aes(group = 1), method = "lm", se = T)
-
-ggplot( data = dsite, aes(x = lat, y = richness )) +
-  facet_wrap( ~age ) +
-  geom_smooth( aes(group = 1), method = "lm", se = T) +
-  geom_point()
 
 # define average temperature and salinity for each site
 d <- d %>% group_by( site) %>% 
@@ -105,82 +98,33 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
 ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 
 
-ggplot( data = dmax, aes(x = lat, y = temp_mean)) +
-  geom_point()
 
 
-# ranges
+# ranges of species richness
 range(dmax$total_richness)
+range(d$richness)
 range(dsite$richness)
-
-
-# models
-# dsite$age <- as.numeric(gsub("([0-9]+).*$", "\\1", dsite$age))
-m1 <- lm( richness ~ lat+temp+salinity+age, dsite)
-summary(m1)
-# remove temperature
-m1a <- lm( richness ~ lat+salinity+factor(age), dsite)
-summary(m1a)
-# remove latitude
-m1b <- lm( richness ~ temp+salinity+factor(age), dsite)
-summary(m1b)
-anova(m1,m1a,m1b)
-
-
-newdat = expand.grid( lat = seq(min(dsite$lat),max(dsite$lat), by = 3), 
-                      salinity = mean(dsite$salinity),
-                      age = factor(c(30,60,90)) )
-newdat$richness = predict(m1a, newdata = newdat )
-ggplot( data = dsite, aes( x = lat, y = richness, col = salinity )) +
-  facet_wrap(~ age) +
-  # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
-  geom_path( data = newdat, lwd = 0.75, col = "black") +
-  geom_point( size = 3) +
-  ylab("Mean species richness") + xlab("Latitude") +
-  scale_color_viridis() +
-  theme_bw() 
-ggsave("figs/richness_latitude_age.svg", width = 6, height = 2)
-
-newdat = expand.grid( temp = seq(min(dsite$temp),max(dsite$temp), by = 3), 
-                      salinity = mean(dsite$salinity),
-                      age = factor(c(30,60,90)) )
-newdat$richness = predict(m1b, newdata = newdat )
-ggplot( data = dsite, aes( x = temp, y = richness, col = salinity )) +
-  facet_wrap(~ age) +
-  # geom_smooth( aes(group = 1), method = "lm", se = T, lwd = 0.75, col = "black") +
-  geom_path( data = newdat, lwd = 0.75, col = "black") +
-  geom_point( size = 3) +
-  ylab("Mean species richness") + xlab("Water temperature (C)") +
-  scale_color_viridis() +
-  theme_bw() 
-ggsave("figs/richness_temperature_age.svg", width = 6, height = 2)
-
 
 
 
 # total richness
-m2 <- lm( total_richness ~ lat+temp_mean+sal_mean, dmax)
-summary(m2)
-# remove temperature
-m2a <- lm( total_richness ~ lat+sal_mean, dmax)
-summary(m2)
-# remove latitude
-m2b <- lm( total_richness ~ temp_mean+sal_mean, dmax)
-summary(m2b)
+m <- lm( total_richness ~ lat+temp_mean+sal_mean, dmax)
+#  latitutde and salinity
+ma <- lm( total_richness ~ lat+sal_mean, dmax)
+# temperature and salinity
+mb <- lm( total_richness ~ temp_mean+sal_mean, dmax)
+# latitude alone
+mc <- lm( total_richness ~ lat, dmax)
+# temperature alone
+md <- lm( total_richness ~ temp_mean, dmax)
+# salinity alone
+me <- lm( total_richness ~ sal_mean, dmax)
+# compare models with AIC
+maic <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
+         weights = T, base = T, logLik = T )  )
+maic$model <- rownames(maic)
+write_csv(maic, "tables/AIC_site_richness.csv")
 
-
-
-# 
-# ggplot( data = dlong, aes(x = temp, y = value, col = salinity )) +
-#   # facet_grid( name~age, scales = "free_y" ) +
-#   facet_wrap( ~name, scales = "free_y" ) +
-#   geom_smooth( aes(group = 1), method = "lm", se = T, col = "black", fill = "grey", lwd = 0.8) +
-#   geom_point( ) + 
-#   xlab( expression(paste("Latitude (",degree,"C)"))) + ylab("Value") +
-#   theme_bw()
-# 
-# m3 <- lm( richness ~ temp+lat+age+salinity, dsite)
-# summary(m3)
 
 
 
@@ -200,7 +144,8 @@ meta$region = 1
 # add temperature
 dsite_means <- dsite %>%
   group_by(site) %>% 
-  summarize( temp = mean(temp), salinity = mean(salinity) )
+  summarize( temp = mean(temp), salinity = mean(salinity), richness = mean(richness) )
+summary(lm())
 meta <- left_join( meta, dsite_means )
 
 #
