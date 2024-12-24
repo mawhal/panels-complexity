@@ -311,15 +311,15 @@
 <polyline points='82.80,12.51 75.80,13.62 80.26,19.12 ' style='stroke-width: 1.07; stroke: #1E90FF; stroke-linecap: butt;' />
 <line x1='183.24' y1='54.84' x2='134.68' y2='146.04' style='stroke-width: 1.07; stroke: #1E90FF; stroke-linecap: butt;' />
 <polyline points='134.44,138.96 134.68,146.04 140.69,142.29 ' style='stroke-width: 1.07; stroke: #1E90FF; stroke-linecap: butt;' />
-<text x='233.89' y='129.78' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='76.66px' lengthAdjust='spacingAndGlyphs'>temperature</text>
-<text x='102.35' y='25.05' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='43.47px' lengthAdjust='spacingAndGlyphs'>salinity</text>
-<text x='149.13' y='141.59' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='49.80px' lengthAdjust='spacingAndGlyphs'>rugosity</text>
-<text x='129.72' y='156.07' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='59.47px' lengthAdjust='spacingAndGlyphs'>Arborescent</text>
-<text x='129.72' y='171.97' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='50.89px' lengthAdjust='spacingAndGlyphs'>bryozoans</text>
-<text x='97.63' y='113.27' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='39.84px' lengthAdjust='spacingAndGlyphs'>Colonial</text>
-<text x='97.63' y='129.16' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='45.98px' lengthAdjust='spacingAndGlyphs'>ascidians</text>
-<text x='291.34' y='144.36' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='52.11px' lengthAdjust='spacingAndGlyphs'>Encrusting</text>
-<text x='291.34' y='160.26' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='50.89px' lengthAdjust='spacingAndGlyphs'>bryozoans</text>
+<text x='214.33' y='150.02' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='76.66px' lengthAdjust='spacingAndGlyphs'>temperature</text>
+<text x='102.32' y='22.50' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='43.47px' lengthAdjust='spacingAndGlyphs'>salinity</text>
+<text x='142.28' y='140.82' text-anchor='middle' style='font-size: 14.23px;fill: #1E90FF; font-family: "Arial";' textLength='49.80px' lengthAdjust='spacingAndGlyphs'>rugosity</text>
+<text x='129.72' y='156.05' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='59.47px' lengthAdjust='spacingAndGlyphs'>Arborescent</text>
+<text x='129.72' y='171.94' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='50.89px' lengthAdjust='spacingAndGlyphs'>bryozoans</text>
+<text x='146.96' y='80.68' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='39.84px' lengthAdjust='spacingAndGlyphs'>Colonial</text>
+<text x='146.96' y='96.57' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='45.98px' lengthAdjust='spacingAndGlyphs'>ascidians</text>
+<text x='291.29' y='144.37' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='52.11px' lengthAdjust='spacingAndGlyphs'>Encrusting</text>
+<text x='291.29' y='160.26' text-anchor='middle' style='font-size: 11.04px;fill: #FF8C00; font-family: "Arial";' textLength='50.89px' lengthAdjust='spacingAndGlyphs'>bryozoans</text>
 <rect x='63.49' y='5.48' width='270.96' height='179.02' style='stroke-width: 1.07; stroke: #333333;' />
 </g>
 <g clip-path='url(#cpMC4wMHwzNjAuMDB8MC4wMHwyMTYuMDA=)'>
@@ -341,7 +341,7 @@
 <text x='183.24' y='195.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='12.24px' lengthAdjust='spacingAndGlyphs'>0.0</text>
 <text x='249.04' y='195.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='12.24px' lengthAdjust='spacingAndGlyphs'>0.4</text>
 <text x='314.85' y='195.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='12.24px' lengthAdjust='spacingAndGlyphs'>0.8</text>
-<text x='198.97' y='208.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='28.74px' lengthAdjust='spacingAndGlyphs'>CAP1</text>
-<text transform='translate(33.43,94.99) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='28.74px' lengthAdjust='spacingAndGlyphs'>CAP2</text>
+<text x='198.97' y='208.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='73.19px' lengthAdjust='spacingAndGlyphs'>CAP 1 (12.9%)</text>
+<text transform='translate(33.43,94.99) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='67.07px' lengthAdjust='spacingAndGlyphs'>CAP 2 (6.8%)</text>
 </g>
 </svg>

@@ -109,6 +109,11 @@ vec.sp <- envfit(ord, perm = 1000, env = comm_meta[,c("temperature","salinity","
 vec.sp.df <- as.data.frame(vec.sp$vectors$arrows * sqrt(vec.sp$vectors$r))
 vec.sp.df$species <- rownames(vec.sp.df)
 
+# custom axis labels
+xlabel = paste0("CAP 1 (", round(R2[1]*100,1), "%)")
+ylabel = paste0("CAP 2 (", round(R2[2]*100,1), "%)")
+
+
 # filter data for the big three taxa
 taxhi <- as.data.frame(taxascore) %>% filter(rownames(taxascore) %in% c("ar_bryo","col_asc","en_bryo") )
 taxhi$taxnames <- c("Arborescent\nbryozoans","Colonial\nascidians","Encrusting\nbryozoans")
@@ -120,6 +125,7 @@ ggplot( data=sr, aes(x = CAP1,y = CAP2) ) +
   geom_text_repel(data=vec.sp.df,aes(x = CAP1,y = CAP2,label = species),size=5, col = "dodgerblue") +
   geom_text_repel(data = taxhi, aes(x = CAP1, y = CAP2, label = taxnames), col = "darkorange") +
   theme_test() +
+  ylab(ylabel) + xlab(xlabel) +
   coord_fixed()
-# ggsave("figs/capscale.svg", width = 5, height = 3)  
+ggsave("figs/capscale.svg", width = 5, height = 3)
 
