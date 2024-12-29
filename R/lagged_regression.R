@@ -200,6 +200,7 @@ psych::pairs.panels( dwide[4:9], scale = T, ellipses = T, smooth = F, stars = F,
                      cex.cor = 1.75, cex = 1.5,
                      )
 
+
 ## Prepare the figure
 ests$direction <- gl( 2, 6, labels = c("richness->complexity","complexity->richness"))
 ests$comparison <- rep(c("30-30","30-60","30-90","60-60","60-90","90-90"), 2)

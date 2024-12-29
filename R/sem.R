@@ -49,7 +49,7 @@ d <- left_join(d, totalrich)
 ### Structural Equation Modeling
 ## compare two models, each with the same number of degrees of freedom, but different directionality
 # focal variables are endogenous
-# some models use data from particular dates, which may complicate model comparison
+# some models use data from particular dates, which may make compared models non-nested
 
 
 ## Structural equation modeling
@@ -60,32 +60,12 @@ d <- left_join(d, totalrich)
 # log-transformed arborescenct bryozoan
 d$log_ar_bryo_90 <- log10( d$ar_bryo_90+1 )
 
-# create SEM using lavaan
+
+
+# create SEMs using lavaan
 ##### SEM1 - diversity influences complexity as hypothesized
+# use panel-level total richness on day 30
 sem1 <- '
-  # regressions
-  lm_middle ~ temp_mean
-  richness_30 ~ temp_mean + sal_mean
-  logrug_90 ~ temp_mean + lm_middle + richness_30
-  # ar_bryo_30 ~  temp_mean + sal_mean
-  # variances of exogenous variables
-  sal_mean ~~ sal_mean
-  temp_mean ~~ temp_mean
-  # covariances of exogenous variables
-  temp_mean ~~ sal_mean
-  # residual variance for endogenous variables
-  lm_middle ~~ lm_middle
-  richness_30 ~~ richness_30
-  logrug_90 ~~ logrug_90
-  # ar_bryo_30 ~~ ar_bryo_30
-  # covariances of residuals
-'
-fit1 <- lavaan(sem1, data = d)
-summary(fit1, fit.measures = T, standardized = T, rsquare = T)
-
-
-##### include arborescent bryozoans
-sem2a <- '
   # regressions
   lm_middle ~ temp_mean
   richness_30 ~ temp_mean + sal_mean
@@ -103,9 +83,11 @@ sem2a <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit2a <- lavaan(sem2a, data = d)
-summary(fit2a, fit.measures = T, standardized = T, rsquare = T)
-sem2 <- '
+fit1 <- lavaan(sem2a, data = d)
+summary(fit1, fit.measures = T, standardized = T, rsquare = T)
+
+# include path from community growth rate to bryozoan cover
+sem1a <- '
   # regressions
   lm_middle ~ temp_mean
   richness_30 ~ temp_mean + sal_mean
@@ -123,11 +105,37 @@ sem2 <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit2a <- lavaan(sem2a, data = d)
-summary(fit2a, fit.measures = T, standardized = T, rsquare = T)
-anova(fit2, fit2a)
+fit1a <- lavaan(sem1a, data = d)
+summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+anova(fit1, fit1a) # adding this path is supported
 
-sem3 <- '
+# arborescent bryozoans not included to test for inclusion of this variable
+sem1b <- '
+  # regressions
+  lm_middle ~ temp_mean
+  richness_30 ~ temp_mean + sal_mean
+  logrug_90 ~ temp_mean + lm_middle + richness_30
+  # ar_bryo_30 ~  temp_mean + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  richness_30 ~~ richness_30
+  logrug_90 ~~ logrug_90
+  # ar_bryo_30 ~~ ar_bryo_30
+  # covariances of residuals
+'
+fitb <- lavaan(sem1b, data = d)
+summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
+anova(fit1a, fit1b)
+
+
+##### SEM2 
+# use site-level )total) richness
+sem2 <- '
   # regressions
   lm_middle ~ temp_mean
   total_richness ~ temp_mean + sal_mean
@@ -145,14 +153,14 @@ sem3 <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit3 <- lavaan(sem3, data = d)
-summary(fit3, fit.measures = T, standardized = T, rsquare = T)
+fit2 <- lavaan(sem2, data = d)
+summary(fit2, fit.measures = T, standardized = T, rsquare = T)
+summary(lm( total_richness ~ temp_mean+sal_mean, d))
 
 
 #
 # model comparison
-anova(fit2,fit2)
-nonnest2::vuongtest( fit2, fit3, nested = FALSE )
+nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
 #
 
 
