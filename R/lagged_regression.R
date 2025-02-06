@@ -43,11 +43,26 @@ d <- d %>% rename( shannon = sh_diversity )
 
 # community data to grab open space and arborescent bryozoans
 comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
+comm_raw$Panel[comm_raw$Panel == "2021_USA-LIS_90D_17"] <- "2021_USA-LIS_90d_17"
+# pull out the relevant columns
 comm_select <- comm_raw %>% select(panel = Panel, site = Site, age = Age, ar_bryo, col_asc, sol_asc, sabellids, sponge, open_space)
+# reformat panel sampling dates (panel ages of 30, 60, and 90 days)
 comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
-
 # merge
 d <- left_join(d, comm_select)
+# community data to calcuclate morphospecies richness
+# extract the community data set 
+comm <- comm_raw %>% dplyr::select( algae:sponge) %>% dplyr::select(-open_space)
+comm_meta <- comm_raw[1:3]
+names(comm_meta) <- tolower(names(comm_meta))
+### compare morphofunctional richness to that of species richness
+# convert cover data to presence/absence
+comm_pa <- ifelse(comm == 0, 0, 1)
+comm_meta$mfrichness <- rowSums(comm_pa)
+# richness data
+comm_meta$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_meta$age))
+d <- left_join(d, comm_meta)
+
 # total_cover
 d$total_cover <- 100 - d$open_space
 
@@ -59,11 +74,15 @@ meta <- read_csv("data/metadata.csv")
 #### Add functionality for ordering by richness or arranging by ocean basin
 # ocean basin
 d <- left_join( d, select(meta, site, ocean))
+# write to disk
+write_csv(d, "data/data_long.csv")
+
 # Calculate averages at site level
 dsite <- d %>% 
   group_by(site, age, temp, salinity, lat, ocean) %>% 
   summarize( ar_bryo = mean(ar_bryo, na.rm=T), col_asc = mean(col_asc, na.rm=T), sol_asc = mean(col_asc, na.rm=T), sabellids = mean(sabellids, na.rm=T),
              richness = mean(richness, na.rm=T), shannon = mean(shannon, na.rm=T), 
+             mfrichness = mean(mfrichness),
              rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover, na.rm=T)) %>% 
   mutate( logrug = log(rug2))
 d <- left_join( d, select(dsite, site, age, richness_mean = richness))
@@ -84,10 +103,11 @@ ggplot( d, aes( x = age, y = richness, col = site )) +
 # pivot the data wider to separate times
 # site-level averages
 dsite <- d %>% 
-  select( site, age, lat, richness, shannon, rug2, temp, salinity, total_cover, ar_bryo ) %>% 
+  select( site, age, lat, richness, shannon, mfrichness, rug2, temp, salinity, total_cover, ar_bryo ) %>% 
   group_by(site, age, lat ) %>% 
   summarise( temp = mean(temp, na.rm = T ), salinity = mean(salinity, na.rm = T), 
              richness = mean(richness, na.rm=T ), shannon = mean(shannon, na.rm=T), 
+             mfrichness = mean(mfrichness, na.rm=T),
              rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover),
              ar_bryo = mean(ar_bryo, na.rm = T)) %>% 
   mutate( logrug = log( rug2 ) )
@@ -101,8 +121,8 @@ dsite <- left_join( dsite, dsitemean )
   
           
 dwide <-  dsite %>%  
-  select( site, age, temp_mean, sal_mean, richness, logrug, total_cover, ar_bryo) %>% 
-  pivot_wider( names_from = age, values_from = c(richness, logrug, total_cover, ar_bryo))
+  select( site, age, temp_mean, sal_mean, richness, mfrichness, logrug, total_cover, ar_bryo) %>% 
+  pivot_wider( names_from = age, values_from = c(richness, mfrichness, logrug, total_cover, ar_bryo))
 
 # write to disk for other analyses
 write_csv( dwide, "data/data_wide.csv" )
@@ -142,13 +162,75 @@ ggplot( dwide, aes( x = logrug_30, y = richness_90 )) +
 ggplot( dwide, aes( x = logrug_60, y = richness_60 )) + 
   geom_smooth( method = 'lm' ) +
   geom_point()
-ggplot( dwide, aes( x = logrug_90, y = richness_60 )) + 
+ggplot( dwide, aes( x = logrug_90, y = richness_90 )) + 
   geom_smooth( method = 'lm' ) +
   geom_point()
 ggplot( dwide, aes( x = logrug_90, y = richness_90 )) + 
   geom_smooth( method = 'lm' ) +
   geom_point()
 
+
+
+# mfrichness -> complexity
+ggplot( dwide, aes( x = mfrichness_30, y = logrug_30 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = mfrichness_30, y = logrug_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = mfrichness_30, y = logrug_90 )) +
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = mfrichness_60, y = logrug_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = mfrichness_60, y = logrug_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = mfrichness_90, y = logrug_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+
+
+# compexity -> mfrichness
+
+ggplot( dwide, aes( x = logrug_30, y = mfrichness_30 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = logrug_30, y = mfrichness_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = logrug_30, y = mfrichness_90 )) +
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = logrug_60, y = mfrichness_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = logrug_90, y = mfrichness_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = logrug_90, y = mfrichness_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+
+ggplot( dwide, aes( x = richness_30, y = mfrichness_30 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = richness_30, y = mfrichness_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = richness_30, y = mfrichness_90 )) +
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = richness_60, y = mfrichness_60 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = richness_60, y = mfrichness_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
+ggplot( dwide, aes( x = richness_90, y = mfrichness_90 )) + 
+  geom_smooth( method = 'lm' ) +
+  geom_point()
 
 
 # linear models
@@ -201,17 +283,46 @@ psych::pairs.panels( dwide[4:9], scale = T, ellipses = T, smooth = F, stars = F,
                      )
 
 
-## Prepare the figure
-ests$direction <- gl( 2, 6, labels = c("richness->complexity","complexity->richness"))
-ests$comparison <- rep(c("30-30","30-60","30-90","60-60","60-90","90-90"), 2)
-ests$focus_lag <- rep(c("30_lag0","60_lag1","90_lag2","60_lag0","90_lag1","90_lag0"), 2)
-ests$lag <- rep(c(0,1,2,0,1,0), 2)
-ests$focus <- rep(c("30 days","60 days","90 days","60 days","90 days","90 days"), 2)
 
-ggplot(data = ests, aes(x = focus, y = est)) +
-  facet_grid(lag~direction, scales = "free") +
-  geom_hline( yintercept = 0, col = "orange" ) +
-  geom_errorbar(aes(ymin = lcl, ymax = ucl), width = 0.25 ) +
-  geom_point() +
-  theme_classic() +
-  coord_flip()
+# ## ### consider models with morphfunctional richness
+# # linear models
+# lm1 <- lm( logrug_30 ~ scale(mfrichness_30), data = dwide )
+# lm2 <- lm( logrug_60 ~ scale(mfrichness_30), data = dwide )
+# lm3 <- lm( logrug_90 ~ scale(mfrichness_30), data = dwide )
+# lm4 <- lm( logrug_60 ~ scale(mfrichness_60), data = dwide )
+# lm5 <- lm( logrug_90 ~ scale(mfrichness_60), data = dwide )
+# lm6 <- lm( logrug_90 ~ scale(mfrichness_90), data = dwide )
+# 
+# lm7 <- lm( mfrichness_30 ~ scale(logrug_30), data = dwide )
+# lm8 <- lm( mfrichness_60 ~ scale(logrug_30), data = dwide )
+# lm9 <- lm( mfrichness_90 ~ scale(logrug_30), data = dwide )
+# lm10 <- lm( mfrichness_60 ~ scale(logrug_60), data = dwide )
+# lm11 <- lm( mfrichness_90 ~ scale(logrug_60), data = dwide )
+# lm12 <- lm( mfrichness_90 ~ scale(logrug_90), data = dwide )
+# 
+# 
+# l1 <- list( lm1, lm2, lm3, lm4, lm5, lm6 )
+# l2 <- list( lm7, lm8, lm9, lm10, lm11, lm12 )
+# allmods <- c(l1,l2)
+# do.call( rbind, lapply(l1, function(z) summary(z)$coeff[c(2,4)] ))
+# ests <- data.frame( name = paste0("lm",1:12), 
+#                     do.call( rbind, lapply(allmods, function(z) summary(z)$coeff[c(2,4)] )),
+#                     do.call( rbind, lapply(allmods, function(z) confint(z)[2,] )) 
+# )
+# names(ests) <- c("model","est","se","lcl","ucl")
+# 
+# 
+# ## Prepare the figure
+# ests$direction <- gl( 2, 6, labels = c("mfrichness->complexity","complexity->mfrichness"))
+# ests$comparison <- rep(c("30-30","30-60","30-90","60-60","60-90","90-90"), 2)
+# ests$focus_lag <- rep(c("30_lag0","60_lag1","90_lag2","60_lag0","90_lag1","90_lag0"), 2)
+# ests$lag <- rep(c(0,1,2,0,1,0), 2)
+# ests$focus <- rep(c("30 days","60 days","90 days","60 days","90 days","90 days"), 2)
+# 
+# ggplot(data = ests, aes(x = focus, y = est)) +
+#   facet_grid(lag~direction, scales = "free") +
+#   geom_hline( yintercept = 0, col = "orange" ) +
+#   geom_errorbar(aes(ymin = lcl, ymax = ucl), width = 0.25 ) +
+#   geom_point() +
+#   theme_classic() +
+#   coord_flip()

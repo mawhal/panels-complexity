@@ -41,6 +41,29 @@ comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
 comm_select <- comm_raw %>% dplyr::select(panel = Panel, site = Site, age = Age, ar_bryo, open_space)
 comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
 
+### Compare morphofunctional richness with species richness
+# extract the community data set 
+comm <- comm_raw %>% dplyr::select( algae:sponge) %>% dplyr::select(-open_space)
+comm_meta <- comm_raw[1:3]
+names(comm_meta) <- tolower(names(comm_meta))
+### compare morphofunctional richness to that of species richness
+# convert cover data to presence/absence
+comm_pa <- ifelse(comm == 0, 0, 1)
+comm_meta$mfrichness <- rowSums(comm_pa)
+# richness data
+comm_meta$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_meta$age))
+comm_rich <- left_join(d, comm_meta)
+ggplot(comm_rich, aes(x=lat, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=lat, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=temp, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=temp, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=richness, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth( method = 'lm' )
+# ggplot(comm_rich, aes(x=mfrichness, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=mfrichness, y=log(rugosity))) + geom_point(alpha=0.3) + geom_smooth()
+ggplot(comm_rich, aes(x=richness, y=log(rugosity))) + geom_point(alpha=0.3) + geom_smooth()
+
+
+
 
 # add metadata and cover data
 # meta_ocean <- meta %>% select(site, ocean)

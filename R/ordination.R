@@ -41,6 +41,7 @@ missing = which(is.na(comm_meta$rugosity))
 comm_meta <- comm_meta[-missing,]
 comm <- comm[-missing,]
 
+
 # nmds
 
 

@@ -25,40 +25,41 @@ library(modelsummary)
 
 
 # d, richness is from point counts, Shannon diversity is for genus/species level for point counts
-d <- readxl::read_xlsx("data/data_community.xlsx", sheet = "Sheet1")
-names(d) <- tolower(names(d))
-d$age <- as.numeric(gsub("([0-9]+).*$", "\\1", d$age))
-d$panel <- gsub( "90D","90d", d$panel)
-d$panel <- gsub( "60D","60d", d$panel)
-
-# transforming rugosity measurements
-d <- d %>% mutate( rugosity_raw = rugosity, rug1 = 1/rugosity_raw, rug2 = 1-rugosity_raw) %>% 
-  mutate( age_factor = factor(age))
-# psych::pairs.panels(d[,c("rug1","rug2")])
-# psych::pairs.panels( log(d[,c("rug1","rug2")]) )
-
-# log transform rugosity
-d$logrug <- log( d$rug2 )
-
-# rename variables
-d <- d %>% rename( shannon = sh_diversity )
+d <- read_csv("data/data_long.csv")
+# d <- readxl::read_xlsx("data/data_community.xlsx", sheet = "Sheet1")
+# names(d) <- tolower(names(d))
+# d$age <- as.numeric(gsub("([0-9]+).*$", "\\1", d$age))
+# d$panel <- gsub( "90D","90d", d$panel)
+# d$panel <- gsub( "60D","60d", d$panel)
+# 
+# # transforming rugosity measurements
+# d <- d %>% mutate( rugosity_raw = rugosity, rug1 = 1/rugosity_raw, rug2 = 1-rugosity_raw) %>% 
+#   mutate( age_factor = factor(age))
+# # psych::pairs.panels(d[,c("rug1","rug2")])
+# # psych::pairs.panels( log(d[,c("rug1","rug2")]) )
+# 
+# # log transform rugosity
+# d$logrug <- log( d$rug2 )
+# 
+# # rename variables
+# d <- d %>% rename( shannon = sh_diversity )
 
 # ## OUTLIER SITES in terms of environment and community growth
 # # some outlier sites
 # doutlier <- d[ (d$site %in% c("USA-WAS", "USA-ALD", "USA-MDA" )), ]
 # # low salinity sites are Alabama and Maryland, while Washington had low cover throughout the study
 
-
-
-# community data to grab open space and arborescent bryozoans
-comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
-comm_select <- comm_raw %>% select(panel = Panel, site = Site, age = Age, ar_bryo, col_asc, sol_asc, sabellids, sponge, open_space)
-comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
-
-# merge
-d <- left_join(d, comm_select)
-# total_cover
-d$total_cover <- 100 - d$open_space
+# 
+# 
+# # community data to grab open space and arborescent bryozoans
+# comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
+# comm_select <- comm_raw %>% select(panel = Panel, site = Site, age = Age, ar_bryo, col_asc, sol_asc, sabellids, sponge, open_space)
+# comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
+# 
+# # merge
+# d <- left_join(d, comm_select)
+# # total_cover
+# d$total_cover <- 100 - d$open_space
 
 # read metadata
 meta <- read_csv("data/metadata.csv")
@@ -73,14 +74,15 @@ d <- left_join( d, select(meta, site, ocean))
 d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
 
+
 # Calculate averages at site level
 dsite <- d %>% 
   group_by(site, age, temp, salinity, lat, ocean) %>% 
   summarize( ar_bryo = mean(ar_bryo, na.rm=T), col_asc = mean(col_asc, na.rm=T), sol_asc = mean(col_asc, na.rm=T), sabellids = mean(sabellids, na.rm=T),
-             richness = mean(richness, na.rm=T), shannon = mean(shannon, na.rm=T), 
+             richness = mean(richness, na.rm=T), mfrichness = mean(mfrichness), #shannon = mean(shannon, na.rm=T), 
              rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover, na.rm=T)) %>% 
   mutate( logrug = log(rug2))
-d <- left_join( d, select(dsite, site, age, richness_mean = richness))
+d <- left_join( d, select(dsite, site, age, richness_mean = richness, mfrichness_mean = mfrichness))
 
 
 
@@ -110,7 +112,7 @@ ggsave("figs/cover_age_site_rug.svg", width = 4, height = 4)
 
 # bivariate relationships
 
-ggplot(d, aes( x = richness, y = logrug, group = site )) +
+ggplot(d, aes( x = mfrichness, y = logrug, group = site )) +
   facet_wrap(~age) +
   geom_smooth( method = "lm", se = F, col = 'gray' ) +
   geom_smooth( aes(group = 1), method = "lm", se = F ) 
@@ -410,3 +412,28 @@ ggsave("figs/model_results_lmer_90.svg", width = 3.2, height = 3)
 #   scale_color_manual( values = c("dodgerblue","blue","black"), name = "Panel\nage")
 # ggsave("figs/model_rugosity_shannon_time.svg", width = 4, height = 3)
 
+
+
+
+
+### use wide site-level data and 
+dsem <- read_csv("data/data_sem.csv")
+# make it longer to plot more easily
+dlong <- dsem %>% 
+  mutate(log_ar_bryo_90 = log(ar_bryo_90+1)) %>% 
+  select(temp_mean, sal_mean, logrug_90, log_ar_bryo_90, mfrichness, richness, richness_30, total_richness) %>% 
+  pivot_longer( !c(sal_mean,temp_mean,logrug_90,log_ar_bryo_90), names_to = "measure" )
+
+# pick metadata to work with
+# dmeta <- dsem %>% select(site,ocean,)
+
+ggplot( data = dlong, aes(x = value, y = logrug_90, col = log_ar_bryo_90)) + 
+  facet_wrap(~measure, scales = "free_x", ncol = 4) +
+  geom_smooth( method = "lm") +
+  geom_point() 
+ggplot( data = dlong, aes(x = temp_mean, y = value, col = sal_mean)) + 
+  facet_wrap(~measure, scales = "free_y", ncol = 4) +
+  geom_smooth() +
+  geom_point() 
+
+psych::pairs.panels( dsem %>% select(richness_30, richness, total_richness, mfrichness) )

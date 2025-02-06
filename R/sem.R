@@ -11,6 +11,7 @@
 
 # packages
 library(tidyverse)
+library(readxl)
 library(lavaan)
 # library(piecewiseSEM)
 
@@ -24,25 +25,35 @@ dpick = dwide %>% filter( ! is.na(logrug_90), ! is.na(total_cover_90)  )
 
 # read estimates of community growth (units = percent cover per day)
 slopes <- read_csv("data/cover_rate_slopes.csv")
-
 # merge
-dpick <- left_join( dpick, slopes )
-# write to disk
-write_csv(dpick, "data/data_sem.csv")
+dslope <- left_join( dpick, slopes )
 
-# -----
-
-# load merged data
-d <- read_csv("data/data_sem.csv")
-
-# species list
+# species list to calculate pooled site-level species richness (all species observed during the study at each site)
 tlist <- read_csv("data/taxon_list.csv")
 totalrich <- tlist %>% 
   group_by( site ) %>% 
   summarize( total_richness = length(unique(taxon)) )
 totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
+# merge
+drich <- left_join(dslope, totalrich)
 
-d <- left_join(d, totalrich)
+# add mean morphofunctional richness and mean species richness for each site
+d <- read_csv("data/data_long.csv")
+d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
+d <- d %>% 
+  group_by(site) %>% 
+  summarize( mfrichness = mean(mfrichness), 
+             richness = mean(richness))
+# merge 
+drich <- left_join(drich,d)
+
+# write to disk
+write_csv(drich, "data/data_sem.csv")
+
+# -----
+
+# load merged data
+d <- read_csv("data/data_sem.csv")
 
 
 
@@ -83,7 +94,7 @@ sem1 <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit1 <- lavaan(sem2a, data = d)
+fit1 <- lavaan(sem1, data = d)
 summary(fit1, fit.measures = T, standardized = T, rsquare = T)
 
 # include path from community growth rate to bryozoan cover
@@ -128,13 +139,13 @@ sem1b <- '
   # ar_bryo_30 ~~ ar_bryo_30
   # covariances of residuals
 '
-fitb <- lavaan(sem1b, data = d)
+fit1b <- lavaan(sem1b, data = d)
 summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
 anova(fit1a, fit1b)
 
 
 ##### SEM2 
-# use site-level )total) richness
+# use site-level (total) richness
 sem2 <- '
   # regressions
   lm_middle ~ temp_mean
@@ -162,6 +173,72 @@ summary(lm( total_richness ~ temp_mean+sal_mean, d))
 # model comparison
 nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
 #
+
+
+##### SEM3 
+# use site-level morphofunctional richness
+sem3 <- '
+  # regressions
+  lm_middle ~ temp_mean
+  mfrichness ~ temp_mean + sal_mean
+  logrug_90 ~ lm_middle + mfrichness + log_ar_bryo_90
+  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  mfrichness ~~ mfrichness
+  logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
+  # covariances of residuals
+'
+fit3 <- lavaan(sem3, data = d)
+summary(fit3, fit.measures = T, standardized = T, rsquare = T)
+summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+
+
+##### SEM4 
+# use site-level species richness
+sem4 <- '
+  # regressions
+  lm_middle ~ temp_mean
+  richness ~ temp_mean + sal_mean
+  logrug_90 ~ lm_middle + richness + log_ar_bryo_90
+  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  richness ~~ richness
+  logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
+  # covariances of residuals
+'
+fit4 <- lavaan(sem4, data = d)
+summary(fit4, fit.measures = T, standardized = T, rsquare = T)
+
+
+
+
+#
+# model comparison
+nonnest2::vuongtest( fit1a, fit1, nested = FALSE )
+nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
+nonnest2::vuongtest( fit1a, fit3, nested = FALSE )
+nonnest2::vuongtest( fit1a, fit4, nested = FALSE )
+#
+
+
+summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+summary(fit3, fit.measures = T, standardized = T, rsquare = T)
+
+
 
 
 # pairwise
