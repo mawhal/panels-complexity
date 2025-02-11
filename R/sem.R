@@ -13,7 +13,6 @@
 library(tidyverse)
 library(readxl)
 library(lavaan)
-# library(piecewiseSEM)
 
 # code chunk below prepare data from other scripts in the project -----
 # read wide data from script "R/lagged_regression.R"
@@ -55,6 +54,21 @@ write_csv(drich, "data/data_sem.csv")
 # load merged data
 d <- read_csv("data/data_sem.csv")
 
+# read metadata
+meta <- read_csv("data/metadata.csv")
+meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
+
+
+
+#### Add functionality for ordering by richness or arranging by ocean basin
+# ocean basin
+d <- left_join( d, select(meta, site, Long, ocean))
+
+
+# log-transformed arborescenct bryozoan
+d$log_ar_bryo_90 <- log10( d$ar_bryo_90+1 )
+
+
 
 
 ### Structural Equation Modeling
@@ -67,10 +81,6 @@ d <- read_csv("data/data_sem.csv")
 
 # link to path diagrams <https://app.diagrams.net/?src=about#Hmawhal%2Fpanels-complexity%2Fmain%2Fsem%2FPanels%20SEM.drawio#%7B%22pageId%22%3A%22D_jNqRS2Lb4KAGGym6pT%22%7D>
 # also found in "sem/Panels SEM.drawio" in this project
-
-# log-transformed arborescenct bryozoan
-d$log_ar_bryo_90 <- log10( d$ar_bryo_90+1 )
-
 
 
 # create SEMs using lavaan
@@ -255,6 +265,16 @@ ggplot( d, aes(x = lm_all, y = logrug_90) ) + geom_point()
 ggplot( d, aes(x = total_cover_90, y = logrug_90) ) + geom_point()
 ggplot( d, aes(x = total_cover_60, y = logrug_90) ) + geom_point()
 ggplot( d, aes(x = total_cover_30, y = logrug_90) ) + geom_point()
+
+ggplot( d, aes(x = richness_30, y = mfrichness, 
+               fill = log_ar_bryo_90)) + 
+  geom_abline(slope = 1, intercept = 0, lty = 3) +
+  geom_point(size = 3, pch = 21) +
+  ylim( c(0,9)) + xlim(c(0,20) ) +
+  ylab("Mean functional\ngroup richness") + 
+  xlab("Specied richness (day 30)") +
+  viridis::scale_fill_viridis( direction = -1)
+ggsave("figs/mfrichness_richness30.svg", width = 5, height = 2)
 
 d %>% select( temp_mean, lm_initial, lm_middle, glm, logrug_90 ) %>% 
   psych::pairs.panels(scale = T)
