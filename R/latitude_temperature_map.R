@@ -43,13 +43,16 @@ d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
 
 
-# site-level data
+# site-level data for 
 dsiteage <- d %>% 
   group_by(site,age,lat,salinity, temp, total_richness) %>% 
-  summarise( richness_age = mean(richness) )
+  summarise( richness_age = mean(richness), logrug_age = mean(logrug, na.rm=T) )
 richness_30 <- dsiteage %>% filter( age == 30 ) %>% 
   ungroup() %>% 
   dplyr::select( site, richness_30 = richness_age )
+logrug_90 <- dsiteage %>% filter( age == 90 ) %>% 
+  ungroup() %>% 
+  dplyr::select( site, logrug_90 = logrug_age )
 
 dsite <- d %>% 
   ungroup() %>% 
@@ -59,6 +62,7 @@ dsite <- d %>%
 
 
 dsite <- left_join(dsite, richness_30 )
+dsite <- left_join(dsite, logrug_90 )
 
 # pivot longer
 drichscale <- dsite %>% 
@@ -104,16 +108,29 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   theme_classic() 
 ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 # temperature and salinity
-ggplot( data = dsite, aes( x = temp, y = mfrichness, col = sal )) +
-  # geom_smooth( aes(group = 1)) +
-  # geom_smooth( aes(group = 1), method = "lm", se = F, lwd = 0.75, col = "black") +
-  geom_smooth( aes(group = 1), method = "lm", formula = y ~ x + I(x^2), se = T, lwd = 0.75, col = "black") +
-  geom_point( size = 3) +
+b <- ggplot( data = dsite, aes( x = temp, y = richness_30, fill = sal )) +
+  geom_point( pch = 21, size = 3) +
   # geom_text_repel( aes(label = site), col = "slateblue" ) +
-  ylab("Functional group richness") + xlab("Latitude") +
-  scale_color_viridis() +
+  ylab("Species richness\n(day 30)") + xlab(expression(paste("Temperature (", degree, "C)"))) +
+  scale_fill_viridis(guide = F, option = "mako",direction = -1) +
   theme_classic() 
-ggsave("figs/mfrichness_temp.svg", width = 2.5, height = 2.5)
+ggplot( data = d, aes( x = richness, y = logrug, col = age )) +
+  geom_smooth( method = "lm", aes(group = age))+
+  geom_point( size = 3) +
+  ylab("log(Rugosity)") + xlab("Richness") +
+  scale_fill_viridis() +
+  theme_classic() 
+dsem <- read_csv("data/data_sem.csv")
+c <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
+  # geom_smooth(method = "lm")+
+  geom_point( pch = 21, size = 3) +
+  ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
+  scale_fill_viridis(option = "mako",direction = -1) +
+  theme_classic() 
+cowplot::plot_grid(b,c, rel_widths = c(1,1.5))
+ggsave("figs/richness_temp_rugosity.svg", width = 6, height = 2)
+cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
+ggsave("figs/richness_temp_rugosity.svg", width = 3, height = 4)
 
 
 
