@@ -421,8 +421,8 @@ dsem <- read_csv("data/data_sem.csv")
 # make it longer to plot more easily
 dlong <- dsem %>% 
   mutate(log_ar_bryo_90 = log(ar_bryo_90+1)) %>% 
-  select(temp_mean, sal_mean, logrug_90, log_ar_bryo_90, mfrichness, richness, richness_30, total_richness) %>% 
-  pivot_longer( !c(sal_mean,temp_mean,logrug_90,log_ar_bryo_90), names_to = "measure" )
+  select(temp_mean, sal_mean, lm_middle, logrug_90, log_ar_bryo_90, mfrichness, richness, richness_30, total_richness) %>% 
+  pivot_longer( !c(sal_mean,temp_mean,logrug_90,lm_middle,log_ar_bryo_90), names_to = "measure" )
 
 # pick metadata to work with
 # dmeta <- dsem %>% select(site,ocean,)
@@ -437,3 +437,127 @@ ggplot( data = dlong, aes(x = temp_mean, y = value, col = sal_mean)) +
   geom_point() 
 
 psych::pairs.panels( dsem %>% select(richness_30, richness, total_richness, mfrichness) )
+
+
+# run the linear models
+lm_list <- lapply(split(dlong, dlong$measure), function(DF) lm(logrug_90 ~ value + lm_middle + log_ar_bryo_90, DF))
+lapply(lm_list, coef)
+lapply(lm_list, summary)
+lapply(lm_list, function(z) summary(z)$r.squared)
+lapply(lm_list, function(z) summary(z)$adj.r.squared)
+
+
+
+# results
+# # 
+# $mfrichness
+# (Intercept)          value      lm_middle log_ar_bryo_90 
+# -3.4515256      0.1798519     -0.4765794      0.4714918 
+# 
+# $richness
+# (Intercept)          value      lm_middle log_ar_bryo_90 
+# -3.40527349     0.07614899    -0.34303446     0.42185380 
+# 
+# $richness_30
+# (Intercept)          value      lm_middle log_ar_bryo_90 
+# -3.24823890     0.09545442    -0.48275521     0.38444449 
+# 
+# $total_richness
+# (Intercept)          value      lm_middle log_ar_bryo_90 
+# -3.38875724     0.03024167    -0.32405880     0.44935126 
+# 
+# > lapply(lm_list, summary)
+# $mfrichness
+# 
+# Call:
+#   lm(formula = logrug_90 ~ value + lm_middle + log_ar_bryo_90, 
+#      data = DF)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -1.7197 -0.2068  0.1476  0.4266  1.2754 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     -3.4515     0.7065  -4.885 0.000483 ***
+#   value            0.1799     0.1196   1.503 0.160874    
+# lm_middle       -0.4766     0.4524  -1.053 0.314755    
+# log_ar_bryo_90   0.4715     0.1413   3.337 0.006633 ** 
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.8179 on 11 degrees of freedom
+# Multiple R-squared:  0.6038,	Adjusted R-squared:  0.4958 
+# F-statistic: 5.589 on 3 and 11 DF,  p-value: 0.01412
+# 
+# 
+# $richness
+# 
+# Call:
+#   lm(formula = logrug_90 ~ value + lm_middle + log_ar_bryo_90, 
+#      data = DF)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -1.83305 -0.25344  0.06764  0.35106  1.14012 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)    -3.40527    0.64816  -5.254 0.000271 ***
+#   value           0.07615    0.04105   1.855 0.090564 .  
+# lm_middle      -0.34303    0.41062  -0.835 0.421268    
+# log_ar_bryo_90  0.42185    0.14210   2.969 0.012776 *  
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.7837 on 11 degrees of freedom
+# Multiple R-squared:  0.6362,	Adjusted R-squared:  0.537 
+# F-statistic: 6.413 on 3 and 11 DF,  p-value: 0.009017
+# 
+# 
+# $richness_30
+# 
+# Call:
+#   lm(formula = logrug_90 ~ value + lm_middle + log_ar_bryo_90, 
+#      data = DF)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -1.59535 -0.36728  0.04023  0.37535  1.11129 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)    -3.24824    0.59047  -5.501 0.000186 ***
+#   value           0.09545    0.04322   2.208 0.049359 *  
+#   lm_middle      -0.48276    0.40316  -1.197 0.256305    
+# log_ar_bryo_90  0.38444    0.13997   2.747 0.019006 *  
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.7474 on 11 degrees of freedom
+# Multiple R-squared:  0.6691,	Adjusted R-squared:  0.5789 
+# F-statistic: 7.415 on 3 and 11 DF,  p-value: 0.005461
+# 
+# 
+# $total_richness
+# 
+# Call:
+#   lm(formula = logrug_90 ~ value + lm_middle + log_ar_bryo_90, 
+#      data = DF)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -1.74102 -0.25967  0.06185  0.30472  1.29446 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)    -3.38876    0.65086  -5.207 0.000291 ***
+#   value           0.03024    0.01676   1.805 0.098554 .  
+# lm_middle      -0.32406    0.41214  -0.786 0.448311    
+# log_ar_bryo_90  0.44935    0.13835   3.248 0.007762 ** 
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.7888 on 11 degrees of freedom
+# Multiple R-squared:  0.6315,	Adjusted R-squared:  0.531 
+# F-statistic: 6.284 on 3 and 11 DF,  p-value: 0.00965
