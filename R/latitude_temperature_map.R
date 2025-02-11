@@ -21,80 +21,64 @@ library(readxl)
 library(ggrepel)
 
 
-
-# read the processed data. Richness is from species lists. Shannon divesity is for functional groups
-# d, richness is from point counts, Shannon diversity is for genus/species level for point counts
-d <- readxl::read_xlsx("data/data_community.xlsx", sheet = "Sheet1")
-names(d) <- tolower(names(d))
-d$age <- as.numeric(gsub("([0-9]+).*$", "\\1", d$age))
-d$panel <- gsub( "90D","90d", d$panel)
-d$panel <- gsub( "60D","60d", d$panel)
-d <- d %>% dplyr::mutate( rugosity_raw = rugosity, rugosity = 1-rugosity_raw) %>% 
-  mutate( age_factor = factor(age))
-# rename variables
-d <- d %>% dplyr::rename( shannon = sh_diversity )
-
-# meta <- read_csv("data/metadata.csv")
-
-# community data to grab open space and arborescent bryozoans
-comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
-comm_select <- comm_raw %>% dplyr::select(panel = Panel, site = Site, age = Age, ar_bryo, open_space)
-comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
-
-### Compare morphofunctional richness with species richness
-# extract the community data set 
-comm <- comm_raw %>% dplyr::select( algae:sponge) %>% dplyr::select(-open_space)
-comm_meta <- comm_raw[1:3]
-names(comm_meta) <- tolower(names(comm_meta))
-### compare morphofunctional richness to that of species richness
-# convert cover data to presence/absence
-comm_pa <- ifelse(comm == 0, 0, 1)
-comm_meta$mfrichness <- rowSums(comm_pa)
-# richness data
-comm_meta$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_meta$age))
-comm_rich <- left_join(d, comm_meta)
-ggplot(comm_rich, aes(x=lat, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=lat, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=temp, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=temp, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=richness, y=mfrichness)) + geom_point(alpha=0.3) + geom_smooth( method = 'lm' )
-# ggplot(comm_rich, aes(x=mfrichness, y=richness)) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=mfrichness, y=log(rugosity))) + geom_point(alpha=0.3) + geom_smooth()
-ggplot(comm_rich, aes(x=richness, y=log(rugosity))) + geom_point(alpha=0.3) + geom_smooth()
-
-
-
-
-# add metadata and cover data
-# meta_ocean <- meta %>% select(site, ocean)
-# d <- left_join(d, meta_ocean)
-d <- left_join(d, comm_select)
-
+# 
+# # read the processed data. Richness is from species lists. Shannon divesity is for functional groups
+# # d, richness is from point counts, Shannon diversity is for genus/species level for point counts
+d <- read_csv("data/data_long.csv")
+# # add metadata and cover data
+# # meta_ocean <- meta %>% select(site, ocean)
+# # d <- left_join(d, meta_ocean)
+# d <- left_join(d, comm_select)
+# 
 # species list
 tlist <- read_csv("data/taxon_list.csv")
-totalrich <- tlist %>% 
-  group_by( site ) %>% 
+totalrich <- tlist %>%
+  group_by( site ) %>%
   summarize( total_richness = length(unique(taxon)) )
 
 d <- left_join(d, totalrich)
 
-
-
-
 # update site names
 d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
-# site level data
-dsite <- d %>% 
+
+
+# site-level data
+dsiteage <- d %>% 
   group_by(site,age,lat,salinity, temp, total_richness) %>% 
-  summarise( richness = mean(richness), shannon = mean(shannon))
+  summarise( richness_age = mean(richness) )
+richness_30 <- dsiteage %>% filter( age == 30 ) %>% 
+  ungroup() %>% 
+  dplyr::select( site, richness_30 = richness_age )
+
+dsite <- d %>% 
+  ungroup() %>% 
+  group_by(site,lat, total_richness) %>% 
+  summarise( richness = mean(richness), mfrichness = mean(mfrichness), 
+               temp = mean(temp), sal = mean(salinity))
 
 
+dsite <- left_join(dsite, richness_30 )
+
+# pivot longer
+drichscale <- dsite %>% 
+  dplyr::select( site, lat, temp, sal, richness_30, richness, total_richness, mfrichness )
+drichscale$richness_30 = c(scale(drichscale$richness_30))
+drichscale$richness = c(scale(drichscale$richness))
+drichscale$total_richness = c(scale(drichscale$total_richness))
+drichscale$mfrichness = c(scale(drichscale$mfrichness)) 
+drichscale <- drichscale %>% 
+  pivot_longer( !c(site, lat, temp, sal), names_to ="measurement" )
 
 
 # bivariate relationships
 # entire dataset - all sampling dates combined
-d_pairs <- dsite %>% ungroup() %>% dplyr::select(lat, temp, salinity, total_richness, richness)
+ggplot( drichscale, aes( x = temp, y = value, col = measurement )) + 
+  geom_smooth(se = F)+
+  geom_point()
+
+# pairs on site-level data
+d_pairs <- dsite %>% ungroup() %>% dplyr::select(lat, temp, sal, total_richness, richness, mfrichness)
 psych::pairs.panels(d_pairs)
 
 
@@ -119,6 +103,17 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   scale_color_viridis() +
   theme_classic() 
 ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
+# temperature and salinity
+ggplot( data = dsite, aes( x = temp, y = mfrichness, col = sal )) +
+  # geom_smooth( aes(group = 1)) +
+  # geom_smooth( aes(group = 1), method = "lm", se = F, lwd = 0.75, col = "black") +
+  geom_smooth( aes(group = 1), method = "lm", formula = y ~ x + I(x^2), se = T, lwd = 0.75, col = "black") +
+  geom_point( size = 3) +
+  # geom_text_repel( aes(label = site), col = "slateblue" ) +
+  ylab("Functional group richness") + xlab("Latitude") +
+  scale_color_viridis() +
+  theme_classic() 
+ggsave("figs/mfrichness_temp.svg", width = 2.5, height = 2.5)
 
 
 
@@ -127,6 +122,44 @@ ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 range(dmax$total_richness)
 range(d$richness)
 range(dsite$richness)
+
+# look at residual effect of temperature after accounting for salinity and latitude
+mt <-  lm( total_richness ~ lat+sal, dsite)
+plot( resid(mt) ~ temp, data = dsite )
+ms <-  lm( richness ~ lat+sal, dsite)
+plot( resid(ms) ~ temp, data = dsite )
+m30 <- lm( richness_30 ~ lat+sal, dsite)
+plot( resid(m30) ~ temp, data = dsite )
+mf <-  lm( mfrichness ~ lat+sal, dsite)
+plot( resid(mf) ~ temp, data = dsite )
+# just salinity
+mt <-  lm( total_richness ~ sal, dsite)
+plot( resid(mt) ~ temp, data = dsite )
+ms <-  lm( richness ~ sal, dsite)
+plot( resid(ms) ~ temp, data = dsite )
+m30 <- lm( richness_30 ~ sal, dsite)
+plot( resid(m30) ~ temp, data = dsite )
+mf <-  lm( mfrichness ~ sal, dsite)
+plot( resid(mf) ~ temp, data = dsite )
+#
+mt <-  lm( total_richness ~ salinity, d)
+plot( resid(mt) ~ temp, data = d )
+ms <-  lm( richness ~ salinity, d)
+plot( resid(ms) ~ temp, data = d )
+mf <-  lm( mfrichness ~ salinity, d)
+plot( resid(mf) ~ temp, data = d )
+
+
+# test for quadratic term
+lm1 <- lm( total_richness ~ temp + sal, dsite)
+lm2 <- lm( total_richness ~ temp + I(temp^2) + sal, dsite)
+AICctab(lm1,lm2, nobs = nrow(dsite))
+summary(lm2)
+
+ggplot( data = d, aes( x = richness, y = mfrichness, col = as.factor(age)) ) +
+  geom_point( alpha=0.5 ) + geom_smooth(se = F)
+ggplot( data = dsite, aes( x = richness, y = mfrichness) ) +
+  geom_point( ) + geom_smooth(se = F, method = 'lm')
 
 
 
@@ -165,11 +198,7 @@ meta$rowid = 1
 meta$region = 1
 
 # add temperature
-dsite_means <- dsite %>%
-  group_by(site) %>% 
-  summarize( temp = mean(temp), salinity = mean(salinity), richness = mean(richness) )
-summary(lm())
-meta <- left_join( meta, dsite_means )
+meta <- left_join( meta, dplyr::select(ungroup(dsite), site, temp, sal, total_richness) )
 
 #
 library(ggthemes)
@@ -190,4 +219,18 @@ world_map %>%
   scale_color_viridis(name = expression(paste(degree,"C")), option = "C") +
   theme_map() +  theme(legend.position = "top") +
   guides( fill = "none", labels = "temperature" )
-ggsave("figs/map.svg", width = 6, height = 4)
+ggsave("figs/map_temp.svg", width = 6, height = 4)
+
+world_map %>% 
+  ggplot(aes(fill = rowid, map_id = region)) +
+  geom_map(map = world_map,  color="black", fill="white", size=0.25) +
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  coord_map("albers", lat0 = 5, lat1 = 60) +
+  # geom_point( data = meta, mapping = aes(x = Long, y = Lat), col = "black", size = 3 ) +
+  geom_point( data = meta, mapping = aes(x = Long, y = Lat, fill = temp, size = total_richness),
+              pch = 21 ) +
+  geom_text_repel(  data = meta, aes(x = Long, y = Lat, label = site), col = "slateblue", box.padding = 0.33  ) +
+  scale_fill_viridis(name = expression(paste(degree,"C")), option = "D", limits = range(dsite$temp)) +
+  theme_map() +  theme(legend.position = "top") +
+  theme( panel.grid.major = element_line(colour = "grey") )
+ggsave("figs/map_rich.svg", width = 6, height = 4)
