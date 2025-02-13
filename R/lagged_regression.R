@@ -274,12 +274,17 @@ aictable$model[1:2]
 lm2
 lm3
 
-# pairs
-# windows(5,5)
-psych::pairs.panels( dwide[4:9], scale = T, ellipses = T, smooth = F, stars = F,
+# pairs plot for lagged responses
+dpairs <- dwide[c(4:6,10:12)]
+names(dpairs) <- c("Richness\n            day 30", "Richness\n            day 60","Richness\n            day 90",
+                      "ln(Rugosity)\n            day 30","ln(Rugosity)\n            day 60", "ln(Rugosity)\n            day 90")
+
+# windows(6,6)
+psych::pairs.panels( dpairs, scale = T, ellipses = T, smooth = F, stars = F,
                      method = "pearson", 
                      hist.col = "lightcoral",
-                     cex.cor = 1.75, cex = 1.5,
+                     cex.cor = 1.75, cex = 1.5
+                     # diag.panel = panel.hist 
                      )
 
 
