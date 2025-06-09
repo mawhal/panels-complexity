@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 
+# added to reduce file storage online
+.svg 
+
+
