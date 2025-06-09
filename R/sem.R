@@ -14,55 +14,56 @@ library(tidyverse)
 library(readxl)
 library(lavaan)
 
-# code chunk below prepare data from other scripts in the project -----
-# read wide data from script "R/lagged_regression.R"
-dwide <- read_csv("data/data_wide.csv")
-# rename sites
-dwide$site <- unlist( lapply( strsplit(dwide$site,"-"), function(z) z[2] ) )
-# remove NA values for relevant variables
-dpick = dwide %>% filter( ! is.na(logrug_90), ! is.na(total_cover_90)  )
-
-# read estimates of community growth (units = percent cover per day)
-slopes <- read_csv("data/cover_rate_slopes.csv")
-# merge
-dslope <- left_join( dpick, slopes )
-
-# species list to calculate pooled site-level species richness (all species observed during the study at each site)
-tlist <- read_csv("data/taxon_list.csv")
-totalrich <- tlist %>% 
-  group_by( site ) %>% 
-  summarize( total_richness = length(unique(taxon)) )
-totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
-# merge
-drich <- left_join(dslope, totalrich)
-
-# add mean morphofunctional richness and mean species richness for each site
-d <- read_csv("data/data_long.csv")
-d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
-d <- d %>% 
-  group_by(site) %>% 
-  summarize( mfrichness = mean(mfrichness), 
-             richness = mean(richness))
-# merge 
-drich <- left_join(drich,d)
-
-# write to disk
-write_csv(drich, "data/data_sem.csv")
+# # code chunk below prepare data from other scripts in the project -----
+# # read wide data from script "R/lagged_regression.R"
+# dwide <- read_csv("data/output/data_wide.csv")
+# # rename sites
+# dwide$site <- unlist( lapply( strsplit(dwide$site,"-"), function(z) z[2] ) )
+# # remove NA values for relevant variables
+# dpick = dwide %>% filter( ! is.na(logrug_90), ! is.na(total_cover_90)  )
+# 
+# # read estimates of community growth from script "cover_rate.R"
+# #  units = percent cover per day)
+# slopes <- read_csv("data/output/cover_rate_slopes.csv")
+# # merge
+# dslope <- left_join( dpick, slopes )
+# 
+# # species list to calculate pooled site-level species richness (all species observed during the study at each site)
+# tlist <- read_csv("data/taxon_list.csv")
+# totalrich <- tlist %>% 
+#   group_by( site ) %>% 
+#   summarize( total_richness = length(unique(taxon)) )
+# totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
+# # merge
+# drich <- left_join(dslope, totalrich)
+# 
+# # add mean morphofunctional richness and mean species richness for each site
+# d <- read_csv("data/output/data_long.csv")
+# d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
+# d <- d %>% 
+#   group_by(site) %>% 
+#   summarize( mfrichness = mean(mfrichness), 
+#              richness = mean(richness))
+# # merge 
+# drich <- left_join(drich,d)
+# 
+# # write to disk
+# write_csv(drich, "data/output/data_sem.csv")
 
 # -----
 
 # load merged data
-d <- read_csv("data/data_sem.csv")
+d <- read_csv("data/output/data_sem.csv")
 
 # read metadata
-meta <- read_csv("data/metadata.csv")
+meta <- read_csv("data/output/metadata.csv")
 meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
 
 
 
 #### Add functionality for ordering by richness or arranging by ocean basin
 # ocean basin
-d <- left_join( d, select(meta, site, Long, ocean))
+d <- left_join( d, select(meta, site, Lat, Long, ocean))
 
 
 # log-transformed arborescenct bryozoan
@@ -151,7 +152,7 @@ sem1b <- '
 '
 fit1b <- lavaan(sem1b, data = d)
 summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
-anova(fit1a, fit1b)
+anova(fit1a, fit1b) # two-degree of freedom chi-squared
 
 
 ##### SEM2 
@@ -282,6 +283,32 @@ d %>% select( temp_mean, lm_initial, lm_middle, glm, logrug_90 ) %>%
 # strong correlations for initial growth rates with temperature
 # 
 
+
+### add latitude as a predictor variable
+
+# include path from community growth rate to bryozoan cover
+sem5 <- '
+  # regressions
+  temp_mean ~ Lat
+  lm_middle ~ temp_mean + Lat
+  richness_30 ~ temp_mean + sal_mean + Lat
+  logrug_90 ~ lm_middle + richness_30 + log_ar_bryo_90
+  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+  # variances of exogenous variables
+  sal_mean ~~ sal_mean
+  temp_mean ~~ temp_mean
+  # covariances of exogenous variables
+  temp_mean ~~ sal_mean
+  # residual variance for endogenous variables
+  lm_middle ~~ lm_middle
+  richness_30 ~~ richness_30
+  logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
+  # covariances of residuals
+'
+fit5 <- lavaan(sem5, data = d)
+summary(fit5, fit.measures = T, standardized = T, rsquare = T)
+anova(fit1a, fit5)
 
 
 

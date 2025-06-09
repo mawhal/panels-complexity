@@ -41,8 +41,8 @@ d <- left_join(d, comm_select)
 # total_cover
 d$total_cover <- 100 - d$open_space
 
-# read metadata
-meta <- read_csv("data/metadata.csv")
+# read metadata - see script "R/cover_data_metadata.R" for source code
+meta <- read_csv("data/output/metadata.csv")
 
 
 
@@ -151,7 +151,7 @@ plot(lm_all ~ lm_initial, data = slopes); abline(a = 0, b = 1)
 plot(glm ~ lm_initial, data = slopes); abline(a = 0, b = 1)
 
 # write to disk
-write_csv(slopes,"data/cover_rate_slopes.csv")
+write_csv(slopes,"data/output/cover_rate_slopes.csv")
 # psych::pairs.panels(slopes[-1], breaks = 10)
 
 dzeros <- left_join(dzeros, slopes)

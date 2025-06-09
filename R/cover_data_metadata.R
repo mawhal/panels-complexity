@@ -11,7 +11,7 @@ library(tidyverse)
 library(readxl)
 library(viridis)
 
-# read the data
+# read the data  
 cover_raw <- read_excel("data/PCover_taxgroups.xlsx", sheet = 1 )
 # misspelling
 cover_raw$Age[ cover_raw$Age %in% "90D" ] <- "90d"
@@ -20,7 +20,7 @@ cover_raw$age_num <- as.numeric(gsub("([0-9]+).*$", "\\1", cover_raw$Age))
 
 
 # read metadata
-meta <- read_csv("data/metadata.csv")
+meta <- read_csv("data/output/metadata.csv")
 names(meta)
 
 # add Ocean Basin
@@ -30,7 +30,7 @@ meta$ocean <- ifelse( meta$Long < -98, "Pacific", "Atlantic") # this works even 
 meta$site[ meta$site == "USA-ALD-PIER"] <- "USA-ALD"
 
 
-
+## changes made to csv generated from originally received "metadata.xlsx" file
 # # salinity and temperature data
 # salinity <- meta %>%
 #   pivot_longer( `Salinity - 30 days`:`Salinity - 90 days`,
@@ -56,7 +56,7 @@ meta$site[ meta$site == "USA-ALD-PIER"] <- "USA-ALD"
 # meta <- meta %>%
 #   mutate( site = gsub( pattern = "SBC", replacement = "SBH", site) )
 # # write metadata to disk
-write_csv( meta, "data/metadata.csv" )
+# write_csv( meta, "data/output/metadata.csv" )
 
 
 # # write cover data to file, so it can be used for other community analyses
@@ -76,7 +76,7 @@ cover <- cover %>%
           total_cover, open_space)
 
 # write to disk
-write_csv( cover, "data/pcover_total.csv" )
+write_csv( cover, "data/output/pcover_total.csv" )
 
 # add latitude and longitude
 cover <- left_join( cover, meta )

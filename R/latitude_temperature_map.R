@@ -12,6 +12,7 @@ library(tidyverse)
 # models
 library(lmerTest)
 library(bbmle)
+library(car)
 # colors
 library(viridis)
 # tables
@@ -22,15 +23,14 @@ library(ggrepel)
 
 
 # 
-# # read the processed data. Richness is from species lists. Shannon divesity is for functional groups
-# # d, richness is from point counts, Shannon diversity is for genus/species level for point counts
-d <- read_csv("data/data_long.csv")
-# # add metadata and cover data
-# # meta_ocean <- meta %>% select(site, ocean)
-# # d <- left_join(d, meta_ocean)
-# d <- left_join(d, comm_select)
+# read the processed data from script "R/lagged_regression.R"
+# Richness is from species lists. Shannon diversity is for functional groups
+#
+# main data sheet containing metadata, rugosity data, richness data
+# d, richness is from point counts, Shannon diversity is for genus/species level for point counts
+d <- read_csv("data/output/data_long.csv")
 # 
-# species list
+# species/morphofunctional list for each panel
 tlist <- read_csv("data/taxon_list.csv")
 totalrich <- tlist %>%
   group_by( site ) %>%
@@ -43,7 +43,7 @@ d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
 
 
-# site-level data for 
+# data that provides mean conditions across each site and panel age category (30,60,90 days)
 dsiteage <- d %>% 
   group_by(site,age,lat,salinity, temp, total_richness) %>% 
   summarise( richness_age = mean(richness), logrug_age = mean(logrug, na.rm=T) )
@@ -106,39 +106,50 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   ylab("Total species richness") + xlab("Latitude") +
   scale_color_viridis() +
   theme_classic() 
-ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
+# ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 # temperature and salinity
 b <- ggplot( data = dsite, aes( x = temp, y = richness_30, fill = sal )) +
   geom_point( pch = 21, size = 3) +
   # geom_text_repel( aes(label = site), col = "slateblue" ) +
   ylab("Species richness\n(day 30)") + xlab(expression(paste("Temperature (", degree, "C)"))) +
-  scale_fill_viridis(guide = F, option = "mako",direction = -1) +
+  scale_fill_gradient(guide = F) +
   theme_classic() 
 ggplot( data = d, aes( x = richness, y = logrug, col = age )) +
-  geom_smooth( method = "lm", aes(group = age))+
+  geom_smooth(  aes(group = age))+
+  # geom_smooth( method = "lm", aes(group = age))+
   geom_point( size = 3) +
   ylab("log(Rugosity)") + xlab("Richness") +
   scale_fill_viridis() +
   theme_classic() 
-dsem <- read_csv("data/data_sem.csv")
+dsem <- read_csv("data/output/data_sem.csv")
 c <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
   # geom_smooth(method = "lm")+
   geom_point( pch = 21, size = 3) +
   ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
-  scale_fill_viridis(option = "mako",direction = -1) +
+  scale_fill_gradient() +
   theme_classic() 
 cowplot::plot_grid(b,c, rel_widths = c(1,1.5))
-ggsave("figs/richness_temp_rugosity.svg", width = 6, height = 2)
+c1 <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
+  # geom_smooth(method = "lm")+
+  geom_text_repel( aes(label = site) ) +
+  geom_point( pch = 21, size = 3) +
+  ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
+  scale_fill_gradient() +
+  theme_classic()
 cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
-ggsave("figs/richness_temp_rugosity.svg", width = 3, height = 4)
 
 
 
 
-# ranges of species richness
+# ranges of morphofunctional (largely taxonomic) richness numbers
+# pooled total richness at a site
 range(dmax$total_richness)
+# richness on a give panel 
 range(d$richness)
+# average richness of sessile invertebrates on panels from each site
 range(dsite$richness)
+
+
 
 # look at residual effect of temperature after accounting for salinity and latitude
 mt <-  lm( total_richness ~ lat+sal, dsite)
@@ -198,13 +209,35 @@ maic <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
 maic$model <- rownames(maic)
 write_csv(maic, "tables/AIC_site_richness.csv")
 
+summary(m)
+vif(lm( total_richness ~ lat+temp_mean+sal_mean, data = dmax))
+summary(ma)
+vif(m)
+
+
+# total richness
+m <- lm( richness_30 ~ lat+temp+sal, dsite)
+#  latitutde and salinity
+ma <- lm( richness_30 ~ lat+sal, dsite)
+# temperature and salinity
+mb <- lm( richness_30 ~ temp+sal, dsite)
+# latitude alone
+mc <- lm( richness_30 ~ lat, dsite)
+# temperature alone
+md <- lm( richness_30 ~ temp, dsite)
+# salinity alone
+me <- lm( richness_30 ~ sal, dsite)
+# compare models with AIC
+maic2 <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
+                                weights = T, base = T, logLik = T )  )
+maic2
 
 
 
 #### mapping 
 
 # consider point color is temperature 
-meta <- read_csv("data/metadata.csv")
+meta <- read_csv("data/output/metadata.csv")
 # update site names
 meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
 meta <- meta[!is.na(meta$Lat),]

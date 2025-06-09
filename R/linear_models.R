@@ -417,7 +417,7 @@ ggsave("figs/model_results_lmer_90.svg", width = 3.2, height = 3)
 
 
 ### use wide site-level data and 
-dsem <- read_csv("data/data_sem.csv")
+dsem <- read_csv("data/output/data_sem.csv")
 # make it longer to plot more easily
 dlong <- dsem %>% 
   mutate(log_ar_bryo_90 = log(ar_bryo_90+1)) %>% 

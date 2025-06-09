@@ -66,8 +66,8 @@ d <- left_join(d, comm_meta)
 # total_cover
 d$total_cover <- 100 - d$open_space
 
-# read metadata
-meta <- read_csv("data/metadata.csv")
+# read metadata - see script "R/cover_data_metadata.R" for source code
+meta <- read_csv("data/output/metadata.csv")
 
 
 
@@ -75,7 +75,7 @@ meta <- read_csv("data/metadata.csv")
 # ocean basin
 d <- left_join( d, select(meta, site, ocean))
 # write to disk
-write_csv(d, "data/data_long.csv")
+write_csv(d, "data/output/data_long.csv")
 
 # Calculate averages at site level
 dsite <- d %>% 
@@ -125,7 +125,7 @@ dwide <-  dsite %>%
   pivot_wider( names_from = age, values_from = c(richness, mfrichness, logrug, total_cover, ar_bryo))
 
 # write to disk for other analyses
-write_csv( dwide, "data/data_wide.csv" )
+write_csv( dwide, "data/output/data_wide.csv" )
 
 # richness -> complexity
 ggplot( dwide, aes( x = richness_30, y = logrug_30 )) + 

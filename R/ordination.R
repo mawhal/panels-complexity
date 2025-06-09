@@ -19,9 +19,7 @@ comm <- cover_raw %>% select( algae:sponge) %>% select(-open_space)
 comm_meta <- cover_raw[1:3]
 names(comm_meta) <- tolower(names(comm_meta))
 
-# meta data and complexity data
-# meta <- read_csv("data/metadata.csv")
-
+# richness and rugosity measures
 d <- readxl::read_xlsx("data/data_community.xlsx", sheet = "Sheet1")
 names(d) <- tolower(names(d))
 d$age <- as.numeric(gsub("([0-9]+).*$", "\\1", d$age))
@@ -33,7 +31,7 @@ dselect <- d %>% select(panel, lat, temp, salinity, rugosity, richness )
 comm_meta <- left_join(comm_meta, dselect)
 
 # add ocean
-meta_og <- read_csv("data/metadata.csv")
+meta_og <- read_csv("data/ouput/metadata.csv")
 comm_meta <- left_join( comm_meta, meta_og %>% select(site,ocean,lon=Long) %>% distinct()  )
 
 # remove miss
@@ -68,7 +66,7 @@ ord.v <- data.frame( family=row.names(ord$CCA$v), ord$CCA$v ) %>% arrange(CAP2)
 
 # extract axes
 nax <- 1:2
-scaling = 0
+scaling = 2
 sitescore <- scores(ord,choices = nax, scaling = scaling)$sites
 taxascore <- scores(ord,choices = nax, scaling = scaling)$species
 
