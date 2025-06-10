@@ -69,9 +69,9 @@ meta <- read_csv("data/metadata.csv")
 #### Add functionality for ordering by richness or arranging by ocean basin
 # ocean basin
 d <- left_join( d, select(meta, site, ocean))
-
-# rename sites
-d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
+# 
+# # rename sites
+# d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
 
 
