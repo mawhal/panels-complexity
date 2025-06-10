@@ -14,43 +14,7 @@ library(tidyverse)
 library(readxl)
 library(lavaan)
 
-# # code chunk below prepare data from other scripts in the project -----
-# # read wide data from script "R/lagged_regression.R"
-# dwide <- read_csv("data/output/data_wide.csv")
-# # rename sites
-# dwide$site <- unlist( lapply( strsplit(dwide$site,"-"), function(z) z[2] ) )
-# # remove NA values for relevant variables
-# dpick = dwide %>% filter( ! is.na(logrug_90), ! is.na(total_cover_90)  )
-# 
-# # read estimates of community growth from script "cover_rate.R"
-# #  units = percent cover per day)
-# slopes <- read_csv("data/output/cover_rate_slopes.csv")
-# # merge
-# dslope <- left_join( dpick, slopes )
-# 
-# # species list to calculate pooled site-level species richness (all species observed during the study at each site)
-# tlist <- read_csv("data/taxon_list.csv")
-# totalrich <- tlist %>% 
-#   group_by( site ) %>% 
-#   summarize( total_richness = length(unique(taxon)) )
-# totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
-# # merge
-# drich <- left_join(dslope, totalrich)
-# 
-# # add mean morphofunctional richness and mean species richness for each site
-# d <- read_csv("data/output/data_long.csv")
-# d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
-# d <- d %>% 
-#   group_by(site) %>% 
-#   summarize( mfrichness = mean(mfrichness), 
-#              richness = mean(richness))
-# # merge 
-# drich <- left_join(drich,d)
-# 
-# # write to disk
-# write_csv(drich, "data/output/data_sem.csv")
 
-# -----
 
 # load merged data
 d <- read_csv("data/output/data_sem.csv")

@@ -129,14 +129,16 @@ c <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )
   scale_fill_gradient() +
   theme_classic() 
 cowplot::plot_grid(b,c, rel_widths = c(1,1.5))
+cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
 c1 <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
   # geom_smooth(method = "lm")+
   geom_text_repel( aes(label = site) ) +
   geom_point( pch = 21, size = 3) +
   ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
-  scale_fill_gradient() +
+  scale_fill_gradient(low = "white", high = "magenta", name = "salinity") +
   theme_classic()
-cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
+c1
+
 
 
 

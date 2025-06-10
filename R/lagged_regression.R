@@ -11,121 +11,12 @@
 # we use data points as independent conditions with
 # only site-level pairing among data points
 
-# packages
 library(tidyverse)
-library(readxl)
-
-## the code chunk below is copied from linear_models.R
-#### -----------------------------
-# d, richness is from point counts, Shannon diversity is for genus/species level for point counts
-d <- readxl::read_xlsx("data/data_community.xlsx", sheet = "Sheet1")
-names(d) <- tolower(names(d))
-d$age <- as.numeric(gsub("([0-9]+).*$", "\\1", d$age))
-d$panel <- gsub( "90D","90d", d$panel)
-d$panel <- gsub( "60D","60d", d$panel)
-
-# transforming rugosity measurements
-d <- d %>% mutate( rugosity_raw = rugosity, rug1 = 1/rugosity_raw, rug2 = 1-rugosity_raw) %>% 
-  mutate( age_factor = factor(age))
-
-# log transform rugosity
-d$logrug <- log( d$rug2 )
-
-# rename variables
-d <- d %>% rename( shannon = sh_diversity )
-
-# ## OUTLIER SITES in terms of environment and community growth
-# # some outlier sites
-# doutlier <- d[ (d$site %in% c("USA-WAS", "USA-ALD", "USA-MDA" )), ]
-# # low salinity sites are Alabama and Maryland, while Washington had low cover throughout the study
 
 
+## read data
+dwide <- read_csv("data/output/data_wide.csv")
 
-# community data to grab open space and arborescent bryozoans
-comm_raw <- read_xlsx("data/PCover_taxgroups.xlsx")
-comm_raw$Panel[comm_raw$Panel == "2021_USA-LIS_90D_17"] <- "2021_USA-LIS_90d_17"
-# pull out the relevant columns
-comm_select <- comm_raw %>% select(panel = Panel, site = Site, age = Age, ar_bryo, col_asc, sol_asc, sabellids, sponge, open_space)
-# reformat panel sampling dates (panel ages of 30, 60, and 90 days)
-comm_select$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_select$age))
-# merge
-d <- left_join(d, comm_select)
-# community data to calcuclate morphospecies richness
-# extract the community data set 
-comm <- comm_raw %>% dplyr::select( algae:sponge) %>% dplyr::select(-open_space)
-comm_meta <- comm_raw[1:3]
-names(comm_meta) <- tolower(names(comm_meta))
-### compare morphofunctional richness to that of species richness
-# convert cover data to presence/absence
-comm_pa <- ifelse(comm == 0, 0, 1)
-comm_meta$mfrichness <- rowSums(comm_pa)
-# richness data
-comm_meta$age <- as.numeric(gsub("([0-9]+).*$", "\\1", comm_meta$age))
-d <- left_join(d, comm_meta)
-
-# total_cover
-d$total_cover <- 100 - d$open_space
-
-# read metadata - see script "R/cover_data_metadata.R" for source code
-meta <- read_csv("data/output/metadata.csv")
-
-
-
-#### Add functionality for ordering by richness or arranging by ocean basin
-# ocean basin
-d <- left_join( d, select(meta, site, ocean))
-# write to disk
-write_csv(d, "data/output/data_long.csv")
-
-# Calculate averages at site level
-dsite <- d %>% 
-  group_by(site, age, temp, salinity, lat, ocean) %>% 
-  summarize( ar_bryo = mean(ar_bryo, na.rm=T), col_asc = mean(col_asc, na.rm=T), sol_asc = mean(col_asc, na.rm=T), sabellids = mean(sabellids, na.rm=T),
-             richness = mean(richness, na.rm=T), shannon = mean(shannon, na.rm=T), 
-             mfrichness = mean(mfrichness),
-             rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover, na.rm=T)) %>% 
-  mutate( logrug = log(rug2))
-d <- left_join( d, select(dsite, site, age, richness_mean = richness))
-#### -----------------------------
-
-
-
-# relationships to investigate
-# rugosity early -> diversity later - this might be better to look at with species associated with primary substrate
-# diversity early - > rugosity later
-# local diversity was fairly steady, seemed to saturate early with respect to primary settlers
-ggplot( d, aes( x = age, y = shannon, col = site )) + 
-  geom_point() + geom_smooth(method = 'lm', se = F)
-ggplot( d, aes( x = age, y = richness, col = site )) + 
-  geom_point() + geom_smooth(method = 'lm', se = F)
-
-
-# pivot the data wider to separate times
-# site-level averages
-dsite <- d %>% 
-  select( site, age, lat, richness, shannon, mfrichness, rug2, temp, salinity, total_cover, ar_bryo ) %>% 
-  group_by(site, age, lat ) %>% 
-  summarise( temp = mean(temp, na.rm = T ), salinity = mean(salinity, na.rm = T), 
-             richness = mean(richness, na.rm=T ), shannon = mean(shannon, na.rm=T), 
-             mfrichness = mean(mfrichness, na.rm=T),
-             rug2 = mean(rug2, na.rm=T), total_cover = mean(total_cover),
-             ar_bryo = mean(ar_bryo, na.rm = T)) %>% 
-  mutate( logrug = log( rug2 ) )
-
-# get average temps and keep the rest
-dsitemean <- dsite %>% 
-  group_by(site) %>% 
-  summarize( temp_mean = mean(temp), sal_mean = mean(salinity) )
-
-dsite <- left_join( dsite, dsitemean )
-  
-          
-dwide <-  dsite %>%  
-  select( site, age, temp_mean, sal_mean, richness, mfrichness, logrug, total_cover, ar_bryo) %>% 
-  pivot_wider( names_from = age, values_from = c(richness, mfrichness, logrug, total_cover, ar_bryo))
-
-# write to disk for other analyses
-write_csv( dwide, "data/output/data_wide.csv" )
 
 # richness -> complexity
 ggplot( dwide, aes( x = richness_30, y = logrug_30 )) + 
