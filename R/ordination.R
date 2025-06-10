@@ -31,7 +31,7 @@ dselect <- d %>% select(panel, lat, temp, salinity, rugosity, richness )
 comm_meta <- left_join(comm_meta, dselect)
 
 # add ocean
-meta_og <- read_csv("data/ouput/metadata.csv")
+meta_og <- read_csv("data/output/metadata.csv")
 comm_meta <- left_join( comm_meta, meta_og %>% select(site,ocean,lon=Long) %>% distinct()  )
 
 # remove miss
@@ -66,7 +66,7 @@ ord.v <- data.frame( family=row.names(ord$CCA$v), ord$CCA$v ) %>% arrange(CAP2)
 
 # extract axes
 nax <- 1:2
-scaling = 2
+scaling = "none"
 sitescore <- scores(ord,choices = nax, scaling = scaling)$sites
 taxascore <- scores(ord,choices = nax, scaling = scaling)$species
 
@@ -107,22 +107,31 @@ library(ggrepel)
 vec.sp <- envfit(ord, perm = 1000, env = comm_meta[,c("temperature","salinity","rugosity")] )
 vec.sp.df <- as.data.frame(vec.sp$vectors$arrows * sqrt(vec.sp$vectors$r))
 vec.sp.df$species <- rownames(vec.sp.df)
+vec.sp.labels <- vec.sp.df
+vec.sp.labels[1,1] <- vec.sp.labels[1,1] + 0.2
+vec.sp.labels[1,2] <- vec.sp.labels[1,2] + 0.2
+vec.sp.labels[2,1] <- vec.sp.labels[2,1] + 0.1
+vec.sp.labels[2,2] <- vec.sp.labels[2,2] - 0.18
+vec.sp.labels[3,1] <- vec.sp.labels[3,1] + 0.25
+vec.sp.labels[3,2] <- vec.sp.labels[3,2] + 0.05
 
 # custom axis labels
-xlabel = paste0("CAP 1 (", round(R2[1]*100,1), "%)")
-ylabel = paste0("CAP 2 (", round(R2[2]*100,1), "%)")
+xlabel = paste0("Axis 1 (", round(R2[1]*100,1), "%)")
+ylabel = paste0("Axis 2 (", round(R2[2]*100,1), "%)")
 
 
 # filter data for the big three taxa
 taxhi <- as.data.frame(taxascore) %>% filter(rownames(taxascore) %in% c("ar_bryo","col_asc","en_bryo") )
 taxhi$taxnames <- c("Arborescent\nbryozoans","Colonial\nascidians","Encrusting\nbryozoans")
 ggplot( data=sr, aes(x = CAP1,y = CAP2) ) + 
-  geom_point(size=2, alpha = 0.5) +
+  # geom_point(size=2, alpha = 0.5) +
   geom_point(data = taxascore, aes(x = CAP1, y = CAP2), fill = "orange", pch = 21, size = 2.5) +
   geom_segment(data=vec.sp.df,aes(x=0,xend=CAP1,y=0,yend=CAP2),
                arrow = arrow(length = unit(0.25, "cm")), colour="dodgerblue") + 
-  geom_text_repel(data=vec.sp.df,aes(x = CAP1,y = CAP2,label = species),size=5, col = "dodgerblue") +
-  geom_text_repel(data = taxhi, aes(x = CAP1, y = CAP2, label = taxnames), col = "darkorange") +
+  geom_text(data=vec.sp.labels,aes(x = CAP1,y = CAP2,label = species),
+                  size=5, col = "dodgerblue") +
+  geom_text_repel(data = taxhi, aes(x = CAP1, y = CAP2, label = taxnames), 
+                  col = "darkorange", point.padding = 2) +
   theme_test() +
   ylab(ylabel) + xlab(xlabel) +
   coord_fixed()
