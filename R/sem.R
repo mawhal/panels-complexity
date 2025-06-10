@@ -146,7 +146,7 @@ summary(lm( total_richness ~ temp_mean+sal_mean, d))
 
 #
 # model comparison
-nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
+# nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
 #
 
 
@@ -201,13 +201,13 @@ summary(fit4, fit.measures = T, standardized = T, rsquare = T)
 
 
 
-#
-# model comparison
-nonnest2::vuongtest( fit1a, fit1, nested = FALSE )
-nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
-nonnest2::vuongtest( fit1a, fit3, nested = FALSE )
-nonnest2::vuongtest( fit1a, fit4, nested = FALSE )
-#
+# #
+# # model comparison
+# nonnest2::vuongtest( fit1a, fit1, nested = FALSE )
+# nonnest2::vuongtest( fit1a, fit2, nested = FALSE )
+# nonnest2::vuongtest( fit1a, fit3, nested = FALSE )
+# nonnest2::vuongtest( fit1a, fit4, nested = FALSE )
+# #
 
 
 summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
@@ -273,6 +273,53 @@ sem5 <- '
 fit5 <- lavaan(sem5, data = d)
 summary(fit5, fit.measures = T, standardized = T, rsquare = T)
 anova(fit1a, fit5)
+#
+
+
+
+## look at partial plots - showing residuals for all but the explantory variable
+
+
+# residual effect of richness (day 30) on log(rugosity) (day 90)
+lgr_90_resid <- lavPredictY(fit1a, ynames = c("logrug_90"),
+            xnames = c( "log_ar_bryo_90", "lm_middle", "temp_mean", "sal_mean"), 
+            method = "conditional.mean",
+            label = TRUE, assemble = TRUE,
+            force.zero.mean = FALSE,
+            lambda = 0)
+#
+d$lgr_90_resid <- lgr_90_resid[,1]
+summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+
+
+ggplot( d, aes(y=lgr_90_resid, x = richness_30) ) +
+  geom_smooth(method = 'lm') +
+  geom_point() +
+  ylab("log(rugosity) on day 90 | temperature,\nsalinity, community growth, bryozoan cover")
+  theme_bw()
+
+ggplot( d, aes(y=logrug_90, x = richness_30) ) +
+  geom_smooth(method = 'lm') +
+  geom_point() +
+  theme_bw()
+
+
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
