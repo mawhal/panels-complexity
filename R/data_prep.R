@@ -103,7 +103,7 @@ meta <- read_csv("data/output/metadata.csv")
 
 #### Add functionality for ordering by richness or arranging by ocean basin
 # ocean basin
-d <- left_join( d, select(meta, site, ocean))
+d <- left_join( d, select(meta, site, ocean, long = Long))
 
 
 
