@@ -19,15 +19,15 @@ library(lavaan)
 # load merged data
 d <- read_csv("data/output/data_sem.csv")
 
-# read metadata
-meta <- read_csv("data/output/metadata.csv")
-meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
-
-
-
-#### Add functionality for ordering by richness or arranging by ocean basin
-# ocean basin
-d <- left_join( d, select(meta, site, Lat, Long, ocean))
+# # read metadata
+# meta <- read_csv("data/output/metadata.csv")
+# meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
+# 
+# 
+# 
+# #### Add functionality for ordering by richness or arranging by ocean basin
+# # ocean basin
+# d <- left_join( d, select(meta, site, Lat, Long, ocean))
 
 
 # log-transformed arborescenct bryozoan
@@ -111,7 +111,6 @@ sem1b <- '
   lm_middle ~~ lm_middle
   richness_30 ~~ richness_30
   logrug_90 ~~ logrug_90
-  # ar_bryo_30 ~~ ar_bryo_30
   # covariances of residuals
 '
 fit1b <- lavaan(sem1b, data = d)
@@ -121,7 +120,7 @@ anova(fit1a, fit1b) # two-degree of freedom chi-squared
 
 ##### SEM2 
 # use site-level (total) richness
-sem2 <- '
+sem2a <- '
   # regressions
   lm_middle ~ temp_mean
   total_richness ~ temp_mean + sal_mean
@@ -139,8 +138,8 @@ sem2 <- '
   log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
-fit2 <- lavaan(sem2, data = d)
-summary(fit2, fit.measures = T, standardized = T, rsquare = T)
+fit2a <- lavaan(sem2a, data = d)
+summary(fit2a, fit.measures = T, standardized = T, rsquare = T)
 summary(lm( total_richness ~ temp_mean+sal_mean, d))
 
 
@@ -150,53 +149,53 @@ summary(lm( total_richness ~ temp_mean+sal_mean, d))
 #
 
 
-##### SEM3 
-# use site-level morphofunctional richness
-sem3 <- '
-  # regressions
-  lm_middle ~ temp_mean
-  mfrichness ~ temp_mean + sal_mean
-  logrug_90 ~ lm_middle + mfrichness + log_ar_bryo_90
-  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
-  # variances of exogenous variables
-  sal_mean ~~ sal_mean
-  temp_mean ~~ temp_mean
-  # covariances of exogenous variables
-  temp_mean ~~ sal_mean
-  # residual variance for endogenous variables
-  lm_middle ~~ lm_middle
-  mfrichness ~~ mfrichness
-  logrug_90 ~~ logrug_90
-  log_ar_bryo_90 ~~ log_ar_bryo_90
-  # covariances of residuals
-'
-fit3 <- lavaan(sem3, data = d)
-summary(fit3, fit.measures = T, standardized = T, rsquare = T)
-summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
-
-
-##### SEM4 
-# use site-level species richness
-sem4 <- '
-  # regressions
-  lm_middle ~ temp_mean
-  richness ~ temp_mean + sal_mean
-  logrug_90 ~ lm_middle + richness + log_ar_bryo_90
-  log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
-  # variances of exogenous variables
-  sal_mean ~~ sal_mean
-  temp_mean ~~ temp_mean
-  # covariances of exogenous variables
-  temp_mean ~~ sal_mean
-  # residual variance for endogenous variables
-  lm_middle ~~ lm_middle
-  richness ~~ richness
-  logrug_90 ~~ logrug_90
-  log_ar_bryo_90 ~~ log_ar_bryo_90
-  # covariances of residuals
-'
-fit4 <- lavaan(sem4, data = d)
-summary(fit4, fit.measures = T, standardized = T, rsquare = T)
+# ##### SEM3 
+# # use site-level morphofunctional richness
+# sem3 <- '
+#   # regressions
+#   lm_middle ~ temp_mean
+#   mfrichness ~ temp_mean + sal_mean
+#   logrug_90 ~ lm_middle + mfrichness + log_ar_bryo_90
+#   log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+#   # variances of exogenous variables
+#   sal_mean ~~ sal_mean
+#   temp_mean ~~ temp_mean
+#   # covariances of exogenous variables
+#   temp_mean ~~ sal_mean
+#   # residual variance for endogenous variables
+#   lm_middle ~~ lm_middle
+#   mfrichness ~~ mfrichness
+#   logrug_90 ~~ logrug_90
+#   log_ar_bryo_90 ~~ log_ar_bryo_90
+#   # covariances of residuals
+# '
+# fit3 <- lavaan(sem3, data = d)
+# summary(fit3, fit.measures = T, standardized = T, rsquare = T)
+# summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+# 
+# 
+# ##### SEM4 
+# # use site-level species richness
+# sem4 <- '
+#   # regressions
+#   lm_middle ~ temp_mean
+#   richness ~ temp_mean + sal_mean
+#   logrug_90 ~ lm_middle + richness + log_ar_bryo_90
+#   log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
+#   # variances of exogenous variables
+#   sal_mean ~~ sal_mean
+#   temp_mean ~~ temp_mean
+#   # covariances of exogenous variables
+#   temp_mean ~~ sal_mean
+#   # residual variance for endogenous variables
+#   lm_middle ~~ lm_middle
+#   richness ~~ richness
+#   logrug_90 ~~ logrug_90
+#   log_ar_bryo_90 ~~ log_ar_bryo_90
+#   # covariances of residuals
+# '
+# fit4 <- lavaan(sem4, data = d)
+# summary(fit4, fit.measures = T, standardized = T, rsquare = T)
 
 
 
@@ -211,7 +210,7 @@ summary(fit4, fit.measures = T, standardized = T, rsquare = T)
 
 
 summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
-summary(fit3, fit.measures = T, standardized = T, rsquare = T)
+# summary(fit3, fit.measures = T, standardized = T, rsquare = T)
 
 
 
@@ -247,23 +246,38 @@ d %>% select( temp_mean, lm_initial, lm_middle, glm, logrug_90 ) %>%
 # strong correlations for initial growth rates with temperature
 # 
 
+# pairs plot for lagged responses
+dpairs <- d[c(6,7,8,3,14)]
+# names(dpairs) <- c("Richness\n            day 30", "Richness\n            day 60","Richness\n            day 90",
+                   # "ln(Rugosity)\n            day 30","ln(Rugosity)\n            day 60", "ln(Rugosity)\n            day 90")
+
+# windows(6,6)
+psych::pairs.panels( dpairs, scale = T, ellipses = T, smooth = F, stars = F,
+                     method = "pearson", 
+                     hist.col = "lightcoral",
+                     cex.cor = 1.75, cex = 1.5
+                     # diag.panel = panel.hist 
+)
+with( dpairs, cor.test( x = richness_30, y= logrug_90))
+with( dpairs, cor.test( x = total_richness, y= logrug_90))
 
 ### add latitude as a predictor variable
 
 # include path from community growth rate to bryozoan cover
 sem5 <- '
   # regressions
-  temp_mean ~ Lat
-  lm_middle ~ temp_mean + Lat
-  richness_30 ~ temp_mean + sal_mean + Lat
+  temp_mean ~ lat
+  lm_middle ~ temp_mean + lat
+  richness_30 ~ temp_mean + sal_mean + lat
   logrug_90 ~ lm_middle + richness_30 + log_ar_bryo_90
   log_ar_bryo_90 ~   temp_mean + lm_middle + sal_mean
   # variances of exogenous variables
   sal_mean ~~ sal_mean
-  temp_mean ~~ temp_mean
+  lat ~~ lat
   # covariances of exogenous variables
-  temp_mean ~~ sal_mean
+  lat ~~ sal_mean
   # residual variance for endogenous variables
+  temp_mean ~~ temp_mean
   lm_middle ~~ lm_middle
   richness_30 ~~ richness_30
   logrug_90 ~~ logrug_90
@@ -272,6 +286,7 @@ sem5 <- '
 '
 fit5 <- lavaan(sem5, data = d)
 summary(fit5, fit.measures = T, standardized = T, rsquare = T)
+summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
 anova(fit1a, fit5)
 #
 
@@ -295,7 +310,7 @@ summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
 ggplot( d, aes(y=lgr_90_resid, x = richness_30) ) +
   geom_smooth(method = 'lm') +
   geom_point() +
-  ylab("log(rugosity) on day 90 | temperature,\nsalinity, community growth, bryozoan cover")
+  ylab("log(rugosity) on day 90 | temperature,\nsalinity, community growth, bryozoan cover") +
   theme_bw()
 
 ggplot( d, aes(y=logrug_90, x = richness_30) ) +
@@ -303,7 +318,21 @@ ggplot( d, aes(y=logrug_90, x = richness_30) ) +
   geom_point() +
   theme_bw()
 
+# arborescent bryozoan cover
+larbry90 <- lavPredictY(fit1a, ynames = c("log_ar_bryo_90"),
+                            xnames = c( "temp_mean"), 
+                            method = "conditional.mean",
+                            label = TRUE, assemble = TRUE,
+                            force.zero.mean = FALSE,
+                            lambda = 0)
+d$larbry90 <- larbry90[,1]
 
+
+ggplot( d, aes(y=larbry90, x = lm_middle) ) +
+  geom_smooth(method = 'lm') +
+  geom_point() +
+  ylab("log(arboresent bryozoans)\non day 90 | temperature,salinity") +
+  theme_bw()
 #
 
 
