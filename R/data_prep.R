@@ -176,7 +176,7 @@ dsite <- left_join( dsite, dsitemean )
 
 
 dwide <-  dsite %>%  
-  select( site, age, temp_mean, sal_mean, richness, mfrichness, logrug, total_cover, ar_bryo) %>% 
+  select( site, total_richness, age, temp_mean, sal_mean, richness, mfrichness, logrug, total_cover, ar_bryo) %>% 
   pivot_wider( names_from = age, values_from = c(richness, mfrichness, logrug, total_cover, ar_bryo))
 
 # write to disk for other analyses
@@ -322,22 +322,20 @@ dpick = dwide %>% filter( ! is.na(logrug_90), ! is.na(total_cover_90)  )
 # merge
 dslope <- left_join( dpick, slopes )
 
-# species list to calculate pooled site-level species richness (all species observed during the study at each site)
-tlist <- read_csv("data/taxon_list.csv")
-totalrich <- tlist %>%
-  group_by( site ) %>%
-  summarize( total_richness = length(unique(taxon)) )
-totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
-# merge
-drich <- left_join(dslope, totalrich)
+# # species list to calculate pooled site-level species richness (all species observed during the study at each site)
+# tlist <- read_csv("data/taxon_list.csv")
+# totalrich <- tlist %>%
+#   group_by( site ) %>%
+#   summarize( total_richness = length(unique(taxon)) )
+# totalrich$site <- unlist( lapply( strsplit(totalrich$site,"-"), function(z) z[2] ) )
 
-# add mean morphofunctional richness and mean species richness for each site
-d <- d %>%
-  group_by(site) %>%
-  summarize( mfrichness = mean(mfrichness),
-             richness = mean(richness))
-# merge
-drich <- left_join(drich,d)
+# # add mean morphofunctional richness and mean species richness for each site
+# d <- d %>%
+#   group_by(site) %>%
+#   summarize( mfrichness = mean(mfrichness),
+#              richness = mean(richness))
+# # merge
+# drich <- left_join(drich,d)
 
 # write to disk
-write_csv(drich, "data/output/data_sem.csv")
+write_csv(dslope, "data/output/data_sem.csv")
