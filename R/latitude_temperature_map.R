@@ -30,16 +30,7 @@ library(ggrepel)
 # d, richness is from point counts, Shannon diversity is for genus/species level for point counts
 d <- read_csv("data/output/data_long.csv")
 # 
-# species/morphofunctional list for each panel
-tlist <- read_csv("data/taxon_list.csv")
-totalrich <- tlist %>%
-  group_by( site ) %>%
-  summarize( total_richness = length(unique(taxon)) )
 
-d <- left_join(d, totalrich)
-
-# update site names
-d$site <- unlist( lapply( strsplit(d$site,"-"), function(z) z[2] ) )
 
 
 
@@ -49,7 +40,7 @@ dsiteage <- d %>%
   summarise( richness_age = mean(richness), logrug_age = mean(logrug, na.rm=T) )
 richness_30 <- dsiteage %>% filter( age == 30 ) %>% 
   ungroup() %>% 
-  dplyr::select( site, richness_30 = richness_age )
+  dplyr::select( site, richness_30 = richness_age, temp_30 = temp )
 logrug_90 <- dsiteage %>% filter( age == 90 ) %>% 
   ungroup() %>% 
   dplyr::select( site, logrug_90 = logrug_age )
@@ -83,7 +74,7 @@ ggplot( drichscale, aes( x = temp, y = value, col = measurement )) +
 
 # pairs on site-level data
 d_pairs <- dsite %>% ungroup() %>% dplyr::select(lat, temp, sal, total_richness, richness, mfrichness)
-psych::pairs.panels(d_pairs)
+# psych::pairs.panels(d_pairs)
 
 
 # define average temperature and salinity for each site
@@ -94,11 +85,52 @@ dmax <- d %>%
   group_by( site, lat, temp_mean, sal_mean, total_richness ) %>% 
   summarize( richness = max(richness) )
 
-ggplot( data = dmax, aes(x = lat, y = richness )) +
-  geom_smooth( aes(group = 1), method = "lm", se = T) +
-  geom_point() +
-  geom_text_repel( aes(label = site) ) +
-  theme_classic()
+dsem <- read_csv("data/output/data_sem.csv")
+all(dsem$site == dsite$site)
+all(dsem$total_richness == dsite$total_richness)
+
+
+a <- ggplot( data = dmax, aes(x = lat, y = total_richness, fill = sal_mean )) +
+  geom_smooth( aes( group = 1 ), method = "lm", col = "black", lwd = 0.75 ) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  # geom_text_repel( aes(label = site), col = "slateblue" ) +
+  xlab("Latitude (degrees N)") + ylab("Pooled\ntaxonomic richness") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+a
+
+a1 <- ggplot( data = dmax, aes(x = lat, y = total_richness, fill = sal_mean )) +
+  # geom_smooth( aes( group = 1 ), method = "lm", col = "black", lwd = 0.75 ) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   point.padding = 0.01,
+                   label.padding = 0.7) +
+  xlab("Latitude (degrees N)") + ylab("Pooled\ntaxonomic richness") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+a1
+
+## richness and latitude at panel and site levels
+# pivot longer with richness estimates as the response
+dlong <- dsem %>% dplyr::select( site_name = site, lat, sal_mean, `day 30` = richness_30, `day 60` = richness_60, `day 90` = richness_90, site = total_richness )
+dlong <- dlong %>% 
+  pivot_longer( `day 30`:site, names_to = "richness")
+
+
+a <- ggplot( data = dlong, aes(x = lat, y = value, color = richness )) +
+  geom_smooth(method = 'lm', se = F, lwd = 0.5) +
+  geom_smooth(data = filter(dlong, richness == "site"), 
+              method = 'lm', se = T) +
+  geom_point( data = filter(dlong, richness == "site"), aes( fill = sal_mean), 
+              pch = 21, size = 3, show.legend = F ) +
+  # geom_text_repel( data = filter(dlong, measure == "total_richness"), aes(label = site), size = 3, 
+                   # point.padding = 0.01, show.legend = T)  +
+  xlab("Latitude (degrees North)") + ylab("Morphospecies richness") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() + theme( legend.position = "top") +
+  guides(color = guide_legend(nrow=2, byrow = T))
+a
+
 ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   geom_smooth( aes(group = 1), method = "lm", se = F, lwd = 0.75, col = "black") +
   geom_point( size = 3) +
@@ -108,39 +140,93 @@ ggplot( data = dmax, aes( x = lat, y = total_richness, col = sal_mean )) +
   theme_classic() 
 # ggsave("figs/richness_latitude.svg", width = 2.5, height = 2.5)
 # temperature and salinity
-b <- ggplot( data = dsite, aes( x = temp, y = richness_30, fill = sal )) +
+b <- ggplot( data = dsite, aes( x = temp_30, y = richness_30, fill = sal )) +
+  geom_smooth( aes(group = 1), method = "lm", se = F, lty = 2, col = "black", lwd = 0.75) +
+  geom_point( aes(group = sal), pch = 21, size = 3) +
+    xlim(c(10,30))+ ylim(c(0,20))+
+  ylab("Panel morphospecies\nrichness(day 30)") + xlab(expression(paste("Temperature (", degree, "C) days 1-30"))) +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+b1 <- ggplot( data = dsite, aes( x = temp_30, y = richness_30, fill = sal )) +
   geom_point( pch = 21, size = 3) +
-  # geom_text_repel( aes(label = site), col = "slateblue" ) +
-  ylab("Species richness\n(day 30)") + xlab(expression(paste("Temperature (", degree, "C)"))) +
-  scale_fill_gradient(guide = F) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   point.padding = 0.01,
+                   label.padding = 0.5 ) +
+  xlim(c(10,30))+ ylim(c(0,20))+
+  ylab("Taxonomic richness\n(day 30)") + xlab(expression(paste("Temperature (", degree, "C) days 1-30"))) +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic() 
-ggplot( data = d, aes( x = richness, y = logrug, col = age )) +
-  geom_smooth(  aes(group = age))+
-  # geom_smooth( method = "lm", aes(group = age))+
-  geom_point( size = 3) +
-  ylab("log(Rugosity)") + xlab("Richness") +
-  scale_fill_viridis() +
-  theme_classic() 
-dsem <- read_csv("data/output/data_sem.csv")
+b1
+ 
 c <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
-  # geom_smooth(method = "lm")+
+  geom_smooth( aes(group = 1), method = "lm", col = "black", lwd = 0.75)+
   geom_point( pch = 21, size = 3) +
-  ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
-  scale_fill_gradient() +
-  theme_classic() 
-cowplot::plot_grid(b,c, rel_widths = c(1,1.5))
-cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
+  xlim(c(0,20))+
+  ylab("log(Rugosity)\n (day 90)") + xlab("Panel richness (day 30)") +
+  scale_fill_gradientn(limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() + theme( legend.position = "top")
+cowplot::plot_grid(b,c, rel_widths = c(1,1.4))
+cowplot::plot_grid(a,b,c, ncol = 3, align = 'hv' )
+# cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
+ggsave("figs/richness_panels.svg", width = 9, height = 3.5)
 c1 <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
-  # geom_smooth(method = "lm")+
-  geom_text_repel( aes(label = site) ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   point.padding = 0.01,
+                   label.padding = 0.5 ) +
   geom_point( pch = 21, size = 3) +
-  ylab("log(Rugosity)\n ") + xlab("Species richness (day 30)") +
-  scale_fill_gradient(low = "white", high = "magenta", name = "salinity") +
+  ylab("log(Rugosity)\n (day 90)") + xlab("Species richness (day 30)") +
+  scale_fill_gradientn(limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic()
 c1
 
+d1 <- ggplot( data = dmax, aes(x = lat, y = sal_mean )) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   point.padding = 0.01,
+                   label.padding = 0.7) +
+  xlab("Latitude (degrees N)") + ylab("Pooled\ntaxonomic richness") +
+  # scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+
+e1 <- ggplot( data = dsem, aes(x = temp_mean, y = lm_middle, fill = sal_mean )) +
+  # geom_smooth(se = T) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   box.padding = 0.3,
+                   label.padding = 0.7) +
+  xlab(expression(paste("Mean temperature (", degree, "C)"))) + ylab("Community growth rate\n(percent cover per day)") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+e1
 
 
+# log-transformed arborescenct bryozoan
+dsem$log_ar_bryo_90 <- log10( dsem$ar_bryo_90+1 )
+
+f1 <- ggplot( data = dsem, aes(x = lm_middle, y = log_ar_bryo_90, fill = sal_mean )) +
+  # geom_smooth(se = T) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   box.padding = 0.3,
+                   label.padding = 0.7) +
+  xlab(expression(paste("Mean temperature (", degree, "C)"))) + ylab("Community growth rate\n(percent cover per day)") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic()
+f1
+
+g1 <- ggplot( data = dsem, aes(x = lat, y = temp_mean )) +
+  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   point.padding = 0.01,
+                   label.padding = 0.7) +
+  xlab("Latitude (degrees N)") + ylab("Temperature (degrees C)") +
+  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  theme_classic() 
+
+# windows(14,10)
+panels <- cowplot::plot_grid(g1,b1,a1,e1,f1,c1,
+                   ncol = 3, align = 'hv')
+ggsave("figs/richness_panels_labels.svg", panels, width = 10, height = 5)
 
 
 # ranges of morphofunctional (largely taxonomic) richness numbers
@@ -186,77 +272,88 @@ lm2 <- lm( total_richness ~ temp + I(temp^2) + sal, dsite)
 AICctab(lm1,lm2, nobs = nrow(dsite))
 summary(lm2)
 
-ggplot( data = d, aes( x = richness, y = mfrichness, col = as.factor(age)) ) +
-  geom_point( alpha=0.5 ) + geom_smooth(se = F)
-ggplot( data = dsite, aes( x = richness, y = mfrichness) ) +
-  geom_point( ) + geom_smooth(se = F, method = 'lm')
+# ggplot( data = d, aes( x = richness, y = mfrichness, col = as.factor(age)) ) +
+#   geom_point( alpha=0.5 ) + geom_smooth(se = F)
+# ggplot( data = dsite, aes( x = richness, y = mfrichness) ) +
+#   geom_point( ) + geom_smooth(se = F, method = 'lm')
 
 
 
 # total richness
-m <- lm( total_richness ~ lat+temp_mean+sal_mean, dmax)
+m <- lm( total_richness ~ lat+sal_mean+temp_mean, dsem)
 #  latitutde and salinity
-ma <- lm( total_richness ~ lat+sal_mean, dmax)
+ma <- lm( total_richness ~ lat+sal_mean, dsem)
 # temperature and salinity
-mb <- lm( total_richness ~ temp_mean+sal_mean, dmax)
-# latitude alone
-mc <- lm( total_richness ~ lat, dmax)
-# temperature alone
-md <- lm( total_richness ~ temp_mean, dmax)
-# salinity alone
-me <- lm( total_richness ~ sal_mean, dmax)
-# compare models with AIC
-maic <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
-         weights = T, base = T, logLik = T )  )
-maic$model <- rownames(maic)
-write_csv(maic, "tables/AIC_site_richness.csv")
+mb <- lm( total_richness ~ temp_mean+sal_mean, dsem)
+# # latitude alone
+# mc <- lm( total_richness ~ lat, dmax)
+# # temperature alone
+# md <- lm( total_richness ~ temp_mean, dmax)
+# # salinity alone
+# me <- lm( total_richness ~ sal_mean, dmax)
+# # compare models with AIC
+# maic <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
+#          weights = T, base = T, logLik = T )  )
+# maic$model <- rownames(maic)
+# write_csv(maic, "tables/AIC_site_richness.csv")
 
-summary(m)
-vif(lm( total_richness ~ lat+temp_mean+sal_mean, data = dmax))
-summary(ma)
+
 vif(m)
+summary(m)
+vif(ma)
+summary(ma)
+vif(mb)
+summary(mb)
 
 
-# total richness
-m <- lm( richness_30 ~ lat+temp+sal, dsite)
+# day 30
+#  richness
+m <- lm( richness_30 ~ lat+temp_mean+sal_mean, dsem)
 #  latitutde and salinity
-ma <- lm( richness_30 ~ lat+sal, dsite)
+ma <- lm( richness_30 ~ lat+sal_mean, dsem)
 # temperature and salinity
-mb <- lm( richness_30 ~ temp+sal, dsite)
-# latitude alone
-mc <- lm( richness_30 ~ lat, dsite)
-# temperature alone
-md <- lm( richness_30 ~ temp, dsite)
-# salinity alone
-me <- lm( richness_30 ~ sal, dsite)
-# compare models with AIC
-maic2 <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
-                                weights = T, base = T, logLik = T )  )
-maic2
+mb <- lm( richness_30 ~ temp_mean+sal_mean, dsem)
+# # latitude alone
+# mc <- lm( richness_30 ~ lat, dsite)
+# # temperature alone
+# md <- lm( richness_30 ~ temp, dsite)
+# # salinity alone
+# me <- lm( richness_30 ~ sal, dsite)
+# # compare models with AIC
+# maic2 <- as.data.frame( AICctab( m, ma, mb, mc, md, me, nobs = nrow(dmax),
+#                                 weights = T, base = T, logLik = T )  )
+# maic2
 
+
+vif(m)
+summary(m)
+vif(ma)
+summary(ma)
+vif(mb)
+summary(mb)
+
+
+
+
+
+# ------------------------------------------
 
 
 #### mapping 
-
-# consider point color is temperature 
-meta <- read_csv("data/output/metadata.csv")
-# update site names
-meta$site <- unlist( lapply( strsplit(meta$site,"-"), function(z) z[2] ) )
-meta <- meta[!is.na(meta$Lat),]
-meta <- meta %>% 
+mapping <- d %>% 
   group_by(site) %>% 
-  summarize( Lat = mean(Lat), Long = mean(Long) )
-meta$rowid = 1
-meta$region = 1
+  summarize( Lat = mean(lat), Long = mean(long) )
+mapping$rowid = 1
+mapping$region = 1
 
 # add temperature
-meta <- left_join( meta, dplyr::select(ungroup(dsite), site, temp, sal, total_richness) )
+mapping <- left_join( mapping, dplyr::select(ungroup(dsite), site, temp, sal, total_richness) )
 
 #
 library(ggthemes)
 
 world_map = map_data("world") %>% 
-  filter(! long > 10, ! lat < 0, ! lat > 70 ) %>% 
+  filter(! long > 20, ! lat < 0, ! lat > 70 ) %>% 
   # distinct( region ) %>% 
   rowid_to_column()
 
@@ -265,9 +362,9 @@ world_map %>%
   geom_map(map = world_map,  color="black", fill="white", size=0.25) +
   expand_limits(x = world_map$long, y = world_map$lat) +
   coord_map("albers", lat0 = 5, lat1 = 60) +
-  geom_point( data = meta, mapping = aes(x = Long, y = Lat), col = "black", size = 3 ) +
-  geom_point( data = meta, mapping = aes(x = Long, y = Lat, col = temp), size = 2.5 ) +
-  geom_text_repel(  data = meta, aes(x = Long, y = Lat, label = site), col = "slateblue", box.padding = 0.33  ) +
+  geom_point( data = mapping, mapping = aes(x = Long, y = Lat), col = "black", size = 3 ) +
+  geom_point( data = mapping, mapping = aes(x = Long, y = Lat, col = temp), size = 2.5 ) +
+  geom_text_repel(  data = mapping, aes(x = Long, y = Lat, label = site), col = "slateblue", box.padding = 0.33  ) +
   scale_color_viridis(name = expression(paste(degree,"C")), option = "C") +
   theme_map() +  theme(legend.position = "top") +
   guides( fill = "none", labels = "temperature" )
@@ -279,10 +376,11 @@ world_map %>%
   expand_limits(x = world_map$long, y = world_map$lat) +
   coord_map("albers", lat0 = 5, lat1 = 60) +
   # geom_point( data = meta, mapping = aes(x = Long, y = Lat), col = "black", size = 3 ) +
-  geom_point( data = meta, mapping = aes(x = Long, y = Lat, fill = temp, size = total_richness),
-              pch = 21 ) +
-  geom_text_repel(  data = meta, aes(x = Long, y = Lat, label = site), col = "slateblue", box.padding = 0.33  ) +
+  geom_point( data = mapping, mapping = aes(x = Long, y = Lat, fill = temp), # size = total_richness,
+              pch = 21, size = 4 ) +
+  geom_text_repel(  data = mapping, aes(x = Long, y = Lat, label = site), col = "slateblue", 
+                    label.padding = 1 ) +
   scale_fill_viridis(name = expression(paste(degree,"C")), option = "D", limits = range(dsite$temp)) +
   theme_map() +  theme(legend.position = "top") +
   theme( panel.grid.major = element_line(colour = "grey") )
-ggsave("figs/map_rich.svg", width = 6, height = 4)
+ggsave("figs/map_temp2.svg", width = 6, height = 4)
