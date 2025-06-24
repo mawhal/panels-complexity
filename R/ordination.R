@@ -49,9 +49,11 @@ ord1 <- capscale( comm ~ rugosity + temperature + salinity, comm_meta, dist = "b
 ord2 <- capscale( comm ~ rugosity, comm_meta, dist = "bray")
 ord <- ord1
 plot(ord)
-anova(ord)
+anova(ord, permutations = 9999)
 # summary(ord)
 taxa <- scores(ord, display = 'species')
+envfit(ord, env = comm_meta[,c("salinity")] )
+envfit(ord, env = comm_meta[,c("temperature")] )
 envfit(ord, env = comm_meta[,c("rugosity")] )
 scores2 <- as.data.frame(taxa[   order( taxa[,1], taxa[,2] ), ])
 scores2 <- scores2 %>% mutate(taxon = rownames(scores2))  %>% arrange(CAP2)
