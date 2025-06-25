@@ -97,9 +97,9 @@ a <- ggplot( data = dmax, aes(x = lat, y = total_richness, fill = sal_mean )) +
   theme_classic() 
 a
 
-a1 <- ggplot( data = dmax, aes(x = lat, y = total_richness, fill = sal_mean )) +
+a1 <- ggplot( data = dmax, aes(x = lat, y = total_richness )) +
   # geom_smooth( aes( group = 1 ), method = "lm", col = "black", lwd = 0.75 ) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_point(  size = 3 ) +
   geom_text_repel( aes(label = site), size = 3, 
                    point.padding = 0.01,
                    label.padding = 0.7) +
@@ -145,14 +145,13 @@ b <- ggplot( data = dsite, aes( x = temp_30, y = richness_30, fill = sal )) +
   ylab("Panel morphospecies\nrichness (day 30)") + xlab(expression(paste("Temperature (", degree, "C) days 1-30"))) +
   scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic() 
-b1 <- ggplot( data = dsite, aes( x = temp_30, y = richness_30, fill = sal )) +
-  geom_point( pch = 21, size = 3) +
+b1 <- ggplot( data = dsite, aes( x = temp_30, y = richness_30 )) +
+  geom_point( size = 3) + 
   geom_text_repel( aes(label = site), size = 3, 
                    point.padding = 0.01,
                    label.padding = 0.5 ) +
   xlim(c(10,30))+ ylim(c(0,20))+
   ylab("Taxonomic richness\nday 30") + xlab(expression(paste("Temperature (", degree, "C) days 1-30"))) +
-  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic() 
 b1
  
@@ -167,33 +166,22 @@ cowplot::plot_grid(b,c, rel_widths = c(1,1.4))
 cowplot::plot_grid(a,b,c, ncol = 3, align = 'hv' )
 # cowplot::plot_grid(b,c, align = "hv",nrow = 2 )
 ggsave("figs/richness_panels.svg", width = 9, height = 3.5)
-c1 <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90, fill = sal_mean )) +
+c1 <- ggplot( data = dsem, aes( x = richness_30, y = logrug_90 )) +
+  geom_point( size = 3) + 
   geom_text_repel( aes(label = site), size = 3, 
                    point.padding = 0.01,
                    label.padding = 0.5 ) +
-  geom_point( pch = 21, size = 3) +
   ylab("log(Rugosity)\nday 90") + xlab("Taxonomic richness\nday 30") +
-  scale_fill_gradientn(limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic()
 c1
 
-d1 <- ggplot( data = dmax, aes(x = lat, y = sal_mean )) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
-  geom_text_repel( aes(label = site), size = 3, 
-                   point.padding = 0.01,
-                   label.padding = 0.7) +
-  xlab("Latitude (degrees N)") + ylab("Pooled\ntaxonomic richness") +
-  # scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
-  theme_classic() 
 
-e1 <- ggplot( data = dsem, aes(x = temp_mean, y = lm_middle, fill = sal_mean )) +
-  # geom_smooth(se = T) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+e1 <- ggplot( data = dsem, aes(x = temp_mean, y = lm_middle )) +
+  geom_point( size = 3) +
   geom_text_repel( aes(label = site), size = 3, 
                    box.padding = 0.3,
                    label.padding = 0.7) +
   xlab(expression(paste("Mean temperature (", degree, "C)"))) + ylab("Community growth rate\n(percent cover per day)") +
-  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic() 
 e1
 
@@ -201,40 +189,38 @@ e1
 # log-transformed arborescenct bryozoan
 dsem$log_ar_bryo_90 <- log10( dsem$ar_bryo_90+1 )
 
-f1 <- ggplot( data = dsem, aes(x = lm_middle, y = log_ar_bryo_90, fill = sal_mean )) +
+f1 <- ggplot( data = dsem, aes(x = lm_middle, y = log_ar_bryo_90 )) +
   # geom_smooth(se = T) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_point( size = 3) + 
   geom_text_repel( aes(label = site), size = 3, 
                    box.padding = 0.3,
                    label.padding = 0.7) +
   xlab("Community growth rate\n(percent cover per day)") + ylab("log(arborescentbryozoan\n% cover) day 90") + 
-  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic()
 f1
 
-h1 <- ggplot( data = dsem, aes(x = log_ar_bryo_90, y = logrug_90, fill = sal_mean )) +
+h1 <- ggplot( data = dsem, aes(x = log_ar_bryo_90, y = logrug_90)) +
   # geom_smooth(se = T) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_point( size = 3) + # aes( fill = sal_mean), pch = 21,  ) +
   geom_text_repel( aes(label = site), size = 3, 
                    box.padding = 0.3,
                    label.padding = 0.7) +
   xlab("log(arborescent bryozoan\n% cover) day 90") + ylab("log(Rugosity)\nday 90") +
-  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic()
 h1
 
 g1 <- ggplot( data = dsem, aes(x = lat, y = temp_mean )) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_point( size = 3) + # aes( fill = sal_mean), pch = 21,  ) +
   geom_text_repel( aes(label = site), size = 3, 
                    point.padding = 0.01,
                    label.padding = 0.7) +
   xlab("Latitude (degrees N)") + ylab(expression(paste("Mean temperature (", degree, "C)"))) + 
-  scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
+  # scale_fill_gradientn(guide = F, limits = c(0,36), colors = c("White","magenta","darkmagenta"), name = "salinity") +
   theme_classic() 
 
-i1 <- ggplot( data = dsem, aes(x = lm_middle, y = logrug_90, fill = sal_mean )) +
+i1 <- ggplot( data = dsem, aes(x = lm_middle, y = logrug_90 )) +
   # geom_smooth(se = T) +
-  geom_point(  aes( fill = sal_mean), pch = 21, size = 3 ) +
+  geom_point(  size = 3 ) +
   geom_text_repel( aes(label = site), size = 3, 
                    box.padding = 0.3,
                    label.padding = 0.7) +
@@ -250,11 +236,27 @@ j1 <- ggplot( data = dsem, aes(x = sal_mean, y = richness_30 )) +
   xlab("Mean salinity") + ylab("Taxonomic richness\nday 30") +
   theme_classic()
 
+k1 <- ggplot( data = dsem, aes(x = sal_mean, y = log_ar_bryo_90 )) +
+  geom_point( size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   box.padding = 0.4) +
+  xlab("Mean salinity") + ylab("log(arborescent bryozoan\n% cover) day 90") +
+  theme_classic()
+
+l1 <- ggplot( data = dsem, aes(x = temp_mean, y = log_ar_bryo_90 )) +
+  geom_point( size = 3 ) +
+  geom_text_repel( aes(label = site), size = 3, 
+                   box.padding = 0.4) +
+  xlab(expression(paste("Mean temperature (", degree, "C)"))) + ylab("log(arborescent bryozoan\n% cover) day 90") +
+  theme_classic()
+summary(lm( log_ar_bryo_90 ~ temp_mean + sal_mean + lm_middle, data = dsem ))
+
 # windows(14,10)
-panels <- cowplot::plot_grid(g1,b1,j1, a1,e1,f1,
-                             h1,i1,c1,
-                   ncol = 3, align = 'hv')
-ggsave("figs/richness_panels_labels.svg", panels, width = 10, height = 7)
+panels <- cowplot::plot_grid(g1, a1,  b1, j1,
+                             e1, l1, f1, k1, 
+                             i1, c1, h1,  
+                                     ncol = 4, align = 'hv')
+ggsave("figs/richness_panels_labels.png", panels, width = 10, height = 8)
 
 
 # ranges of morphofunctional (largely taxonomic) richness numbers
