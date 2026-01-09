@@ -250,6 +250,9 @@ l1 <- ggplot( data = dsem, aes(x = temp_mean, y = log_ar_bryo_90 )) +
   xlab(expression(paste("Mean temperature (", degree, "C)"))) + ylab("log(arborescent bryozoan\n% cover) day 90") +
   theme_classic()
 summary(lm( log_ar_bryo_90 ~ temp_mean + sal_mean + lm_middle, data = dsem ))
+summary(lm( log_ar_bryo_90 ~ sal_mean + lm_middle, data = dsem ))
+lm_arbryo <- lm( log_ar_bryo_90 ~ sal_mean + temp_mean + lm_middle, data = dsem )
+car::vif(lm_arbryo)
 
 # windows(14,10)
 panels <- cowplot::plot_grid(g1, a1,  b1, j1,

@@ -95,13 +95,14 @@ fit1a <- lavaan(sem1a, data = d)
 summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
 anova(fit1, fit1a) # adding this path is supported
 
-# arborescent bryozoans not included to test for inclusion of this variable
+
+# iremove 
 sem1b <- '
   # regressions
   lm_middle ~ temp_mean
   richness_30 ~ temp_mean + sal_mean
-  logrug_90 ~ temp_mean + lm_middle + richness_30
-  # ar_bryo_30 ~  temp_mean + sal_mean
+  logrug_90 ~ lm_middle + richness_30 + log_ar_bryo_90
+  log_ar_bryo_90 ~   lm_middle + sal_mean
   # variances of exogenous variables
   sal_mean ~~ sal_mean
   temp_mean ~~ temp_mean
@@ -111,11 +112,37 @@ sem1b <- '
   lm_middle ~~ lm_middle
   richness_30 ~~ richness_30
   logrug_90 ~~ logrug_90
+  log_ar_bryo_90 ~~ log_ar_bryo_90
   # covariances of residuals
 '
 fit1b <- lavaan(sem1b, data = d)
 summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
-anova(fit1a, fit1b) # two-degree of freedom chi-squared
+# summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
+anova(fit1a, fit1b)
+lavTestLRT(fit1b, fit1a)
+
+
+# # arborescent bryozoans not included to test for inclusion of this variable
+# sem1b <- '
+#   # regressions
+#   lm_middle ~ temp_mean
+#   richness_30 ~ temp_mean + sal_mean
+#   logrug_90 ~ temp_mean + lm_middle + richness_30
+#   # ar_bryo_30 ~  temp_mean + sal_mean
+#   # variances of exogenous variables
+#   sal_mean ~~ sal_mean
+#   temp_mean ~~ temp_mean
+#   # covariances of exogenous variables
+#   temp_mean ~~ sal_mean
+#   # residual variance for endogenous variables
+#   lm_middle ~~ lm_middle
+#   richness_30 ~~ richness_30
+#   logrug_90 ~~ logrug_90
+#   # covariances of residuals
+# '
+# fit1b <- lavaan(sem1b, data = d)
+# summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
+# anova(fit1a, fit1b) # two-degree of freedom chi-squared
 
 
 ##### SEM2 
