@@ -135,7 +135,11 @@ ggplot( data=sr, aes(x = CAP1,y = CAP2) ) +
   geom_text_repel(data = taxhi, aes(x = CAP1, y = CAP2, label = taxnames), 
                   col = "darkorange", point.padding = 2) +
   theme_test() +
+  theme(panel.grid.major = element_line(colour = "gray", linewidth = 0.33, linetype = "solid") ) +
   ylab(ylabel) + xlab(xlabel) +
-  coord_fixed()
+  coord_fixed(ratio = 1) +
+  scale_x_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5, 0.75)) +
+  scale_y_continuous(breaks = c(-0.75, -0.5, -0.25, 0, 0.25)) 
+  
 ggsave("figs/capscale.svg", width = 5, height = 3)
 
