@@ -96,7 +96,7 @@ summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
 anova(fit1, fit1a) # adding this path is supported
 
 
-# iremove 
+# remove temperature as predictor of arborescent bryozoan cover
 sem1b <- '
   # regressions
   lm_middle ~ temp_mean
@@ -118,7 +118,7 @@ sem1b <- '
 fit1b <- lavaan(sem1b, data = d)
 summary(fit1b, fit.measures = T, standardized = T, rsquare = T)
 # summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
-anova(fit1a, fit1b)
+anova(fit1a, fit1b)  # suggests keeping the path
 lavTestLRT(fit1b, fit1a)
 
 
@@ -237,9 +237,9 @@ summary(lm( total_richness ~ temp_mean+sal_mean, d))
 
 
 summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
-# summary(fit3, fit.measures = T, standardized = T, rsquare = T)
-
-
+std.results <- standardizedSolution(fit1a)
+std.results$interval = (std.results$ci.upper - std.results$ci.lower)/2
+write_csv(std.results, "data/output/sem_params.csv")
 
 
 # pairwise
