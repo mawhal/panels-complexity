@@ -236,10 +236,24 @@ summary(lm( total_richness ~ temp_mean+sal_mean, d))
 # #
 
 
-summary(fit1a, fit.measures = T, standardized = T, rsquare = T)
-std.results <- standardizedSolution(fit1a)
-std.results$interval = (std.results$ci.upper - std.results$ci.lower)/2
-write_csv(std.results, "data/output/sem_params.csv")
+# Calculate standardized estimates after bootstrapping during the fit
+# bootstrapped fit with calculations using semhelpinghands
+# see discussion in <https://groups.google.com/g/lavaan/c/lwCZIH-Unyk/m/iGHI_xsoAgAJ>
+fit1aboot <- sem(sem1a,
+                    data = d,
+                    se = "bootstrap",
+                    bootstrap = 10000,
+                    parallel = "snow",
+                    ncpus = 4,
+                    iseed = 1234)
+summary(fit1aboot, fit.measures = T, standardized = T, rsquare = T)
+unstd.results <- parameterEstimates(fit1aboot, standardized = F, ci = TRUE)
+write_csv(unstd.results, "data/output/sem_params.csv")
+# add standarized estimates
+standardizedSolution(fit1aboot)
+std.results <- semhelpinghands::standardizedSolution_boot_ci(fit1aboot)
+std.results$interval = (std.results$boot.ci.upper - std.results$boot.ci.lower)/2
+write_csv(std.results, "data/output/sem_params_boot.csv")
 
 
 # pairwise
