@@ -247,9 +247,11 @@ fit1aboot <- sem(sem1a,
                     ncpus = 4,
                     iseed = 1234)
 summary(fit1aboot, fit.measures = T, standardized = T, rsquare = T)
+summary(fit1a,     fit.measures = T, standardized = T, rsquare = T)
+# parameter estimates
 unstd.results <- parameterEstimates(fit1aboot, standardized = F, ci = TRUE)
 write_csv(unstd.results, "data/output/sem_params.csv")
-# add standarized estimates
+# add standardized estimates
 standardizedSolution(fit1aboot)
 std.results <- semhelpinghands::standardizedSolution_boot_ci(fit1aboot)
 std.results$interval = (std.results$boot.ci.upper - std.results$boot.ci.lower)/2
